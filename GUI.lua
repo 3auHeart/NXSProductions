@@ -68,7 +68,7 @@ local function loadWithTimeout(url: string, timeout: number?): ...any
 	return if success then result else nil
 end
 
-local requestsDisabled = getgenv and getgenv().DISABLE_RAYFIELD_REQUESTS
+local requestsDisabled = true --getgenv and getgenv().DISABLE_RAYFIELD_REQUESTS
 local InterfaceBuild = '3K3W'
 local Release = "Build 1.672"
 local RayfieldFolder = "Rayfield"
@@ -524,40 +524,47 @@ local RayfieldLibrary = {
 			PlaceholderColor = Color3.fromRGB(170, 130, 140)
 		},
 
-		DarkBlue = {
-			TextColor = Color3.fromRGB(255, 255, 255),
-			Background = Color3.fromRGB(15, 15, 15),  -- Darker background like in the image
-			Topbar = Color3.fromRGB(20, 20, 20),      -- Very dark topbar
-			Shadow = Color3.fromRGB(138, 43, 226),      -- Deeper shadows
-			NotificationBackground = Color3.fromRGB(20, 20, 20),
-			NotificationActionsBackground = Color3.fromRGB(30, 30, 30),
-			TabBackground = Color3.fromRGB(25, 25, 25),
-			TabStroke = Color3.fromRGB(35, 35, 35),
-			TabBackgroundSelected = Color3.fromRGB(138, 43, 226),  -- Purple highlight for selected tab
-			TabTextColor = Color3.fromRGB(200, 200, 200),
-			SelectedTabTextColor = Color3.fromRGB(255, 255, 255),
-			ElementBackground = Color3.fromRGB(25, 25, 25),        -- Darker element background
-			ElementBackgroundHover = Color3.fromRGB(35, 35, 35),
-			SecondaryElementBackground = Color3.fromRGB(30, 30, 30),
-			ElementStroke = Color3.fromRGB(40, 40, 40),
-			SecondaryElementStroke = Color3.fromRGB(35, 35, 35),
-			SliderBackground = Color3.fromRGB(138, 43, 226),       -- Purple slider
-			SliderProgress = Color3.fromRGB(160, 50, 255),         -- Brighter purple for progress
-			SliderStroke = Color3.fromRGB(180, 60, 255),           -- Glowing purple stroke
-			ToggleBackground = Color3.fromRGB(25, 25, 25),
-			ToggleEnabled = Color3.fromRGB(138, 43, 226),          -- Purple for enabled toggle
-			ToggleDisabled = Color3.fromRGB(50, 50, 50),
-			ToggleEnabledStroke = Color3.fromRGB(160, 50, 255),    -- Glowing purple stroke
-			ToggleDisabledStroke = Color3.fromRGB(60, 60, 60),
-			ToggleEnabledOuterStroke = Color3.fromRGB(180, 60, 255), -- Outer glow effect
-			ToggleDisabledOuterStroke = Color3.fromRGB(40, 40, 40),
-			DropdownSelected = Color3.fromRGB(138, 43, 226),       -- Purple for selected dropdown item
-			DropdownUnselected = Color3.fromRGB(25, 25, 25),
-			InputBackground = Color3.fromRGB(25, 25, 25),
-			InputStroke = Color3.fromRGB(40, 40, 40),
-			PlaceholderColor = Color3.fromRGB(180, 180, 180)
-		},
+DarkBlue = {
+	TextColor = Color3.fromRGB(255, 255, 255),
 
+	Background = Color3.fromRGB(15, 15, 15),
+	Topbar = Color3.fromRGB(20, 20, 20),
+	Shadow = Color3.fromRGB(138, 43, 226),
+
+	NotificationBackground = Color3.fromRGB(20, 20, 20),
+	NotificationActionsBackground = Color3.fromRGB(30, 30, 30),
+
+	TabBackground = Color3.fromRGB(25, 25, 25),
+	TabStroke = Color3.fromRGB(35, 35, 35),
+	TabBackgroundSelected = Color3.fromRGB(138, 43, 226),
+	TabTextColor = Color3.fromRGB(200, 200, 200),
+	SelectedTabTextColor = Color3.fromRGB(255, 255, 255),
+
+	ElementBackground = Color3.fromRGB(25, 25, 25),
+	ElementBackgroundHover = Color3.fromRGB(35, 35, 35),
+	SecondaryElementBackground = Color3.fromRGB(30, 30, 30),
+	ElementStroke = Color3.fromRGB(40, 40, 40),
+	SecondaryElementStroke = Color3.fromRGB(35, 35, 35),
+
+	SliderBackground = Color3.fromRGB(138, 43, 226),
+	SliderProgress = Color3.fromRGB(160, 50, 255),
+	SliderStroke = Color3.fromRGB(180, 60, 255),
+
+	ToggleBackground = Color3.fromRGB(25, 25, 25),
+	ToggleEnabled = Color3.fromRGB(138, 43, 226),
+	ToggleDisabled = Color3.fromRGB(50, 50, 50),
+	ToggleEnabledStroke = Color3.fromRGB(160, 50, 255),
+	ToggleDisabledStroke = Color3.fromRGB(60, 60, 60),
+	ToggleEnabledOuterStroke = Color3.fromRGB(180, 60, 255),
+	ToggleDisabledOuterStroke = Color3.fromRGB(40, 40, 40),
+
+	DropdownSelected = Color3.fromRGB(138, 43, 226),
+	DropdownUnselected = Color3.fromRGB(25, 25, 25),
+
+	InputBackground = Color3.fromRGB(25, 25, 25),
+	InputStroke = Color3.fromRGB(40, 40, 40),
+	PlaceholderColor = Color3.fromRGB(180, 180, 180)
+},
 		Serenity = {
 			TextColor = Color3.fromRGB(50, 55, 60),
 			Background = Color3.fromRGB(240, 245, 250),
@@ -3899,9 +3906,9 @@ if CEnabled and Main:FindFirstChild('Notice') then
 	TweenService:Create(Main.Notice.Title, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {TextTransparency = 0.1}):Play()
 end
 
-if not useStudio then
-	task.spawn(loadWithTimeout, "https://raw.githubusercontent.com/SiriusSoftwareLtd/Sirius/refs/heads/request/boost.lua")
-end
+-- if not useStudio then
+-- 	task.spawn(loadWithTimeout, "https://raw.githubusercontent.com/SiriusSoftwareLtd/Sirius/refs/heads/request/boost.lua")
+-- end
 
 task.delay(4, function()
 	RayfieldLibrary.LoadConfiguration()
