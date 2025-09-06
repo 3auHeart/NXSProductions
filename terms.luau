@@ -1,8 +1,6 @@
 local promptRet = {}
 
 local useStudio
-local acceptedPrompts = {}
-
 local runService = game:GetService("RunService")
 local coreGui = game:GetService('CoreGui')
 local textService = game:GetService('TextService')
@@ -37,7 +35,6 @@ end
 local function open(prompt, finalSize)
 	debounce = true
 	prompt.Policy.Size = UDim2.new(0, 450, 0, 120)
-
 	prompt.Policy.BackgroundTransparency = 1
 	prompt.Policy.Shadow.Image.ImageTransparency = 1
 	prompt.Policy.Title.TextTransparency = 1
@@ -75,15 +72,21 @@ end
 
 local function close(prompt, isAccepted, promptId)
 	debounce = true
-	
-	if isAccepted and promptId then
-		acceptedPrompts[promptId] = true
+
+	local NexusFolder = Workspace:FindFirstChild("Nexus") or Instance.new("Folder")
+	NexusFolder.Name = "Nexus"
+	NexusFolder.Parent = Workspace
+
+	if promptId and isAccepted then
+		local record = NexusFolder:FindFirstChild(promptId) or Instance.new("BoolValue")
+		record.Name = promptId
+		record.Value = true
+		record.Parent = NexusFolder
 	end
 	
 	tweenService:Create(prompt.Policy, TweenInfo.new(0.3, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {Size = UDim2.new(0, 430, 0, 110)}):Play()
 	tweenService:Create(prompt.Policy.Title, TweenInfo.new(0.35, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
 	tweenService:Create(prompt.Policy.Notice, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
-
 	if prompt.Policy.Actions:FindFirstChild("Secondary") then
 		tweenService:Create(prompt.Policy.Actions.Secondary.Title, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
 	end
@@ -92,29 +95,26 @@ local function close(prompt, isAccepted, promptId)
 	tweenService:Create(prompt.Policy.Actions.Primary.Shadow, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {ImageTransparency = 1}):Play()
 	tweenService:Create(prompt.Policy, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
 	tweenService:Create(prompt.Policy.Shadow.Image, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {ImageTransparency = 1}):Play()
-	
 	task.wait(0.5)
-
-	if isAccepted then
-		local NexusFolder = Workspace:FindFirstChild("Nexus") or Instance.new("Folder")
-		NexusFolder.Name = "Nexus"
-		NexusFolder.Parent = Workspace
-
-		local dataValue = Instance.new("StringValue")
-		dataValue.Name = prompt.Policy.Title.Text
-		dataValue.Value = HttpService:JSONEncode({
-			description = prompt.Policy.Notice.Text,
-			primary = prompt.Policy.Actions.Primary.Title.Text
-		})
-		dataValue.Parent = NexusFolder
-	end
-
 	prompt:Destroy()
 end
 
 function promptRet.create(title, description, primary, secondary, callback, promptId)
-	if promptId and acceptedPrompts[promptId] then
+	local NexusFolder = Workspace:FindFirstChild("Nexus") or Instance.new("Folder")
+	NexusFolder.Name = "Nexus"
+	NexusFolder.Parent = Workspace
+
+	if promptId and NexusFolder:FindFirstChild(promptId) and NexusFolder[promptId].Value == true then
+		if callback then
+			callback(true)
+		end
 		return
+	end
+
+	for _, oldPrompt in pairs(coreGui:GetChildren()) do
+		if oldPrompt.Name == "Prompt" then
+			oldPrompt:Destroy()
+		end
 	end
 	
 	local prompt = useStudio and script.Parent:FindFirstChild('Prompt') or game:GetObjects("rbxassetid://97206084643256")[1]
@@ -169,11 +169,15 @@ function promptRet.create(title, description, primary, secondary, callback, prom
 end
 
 function promptRet.isAccepted(promptId)
-	return acceptedPrompts[promptId] == true
+	local NexusFolder = Workspace:FindFirstChild("Nexus")
+	return NexusFolder and NexusFolder:FindFirstChild(promptId) and NexusFolder[promptId].Value == true
 end
 
 function promptRet.clearAcceptance(promptId)
-	acceptedPrompts[promptId] = nil
+	local NexusFolder = Workspace:FindFirstChild("Nexus")
+	if NexusFolder and NexusFolder:FindFirstChild(promptId) then
+		NexusFolder[promptId]:Destroy()
+	end
 end
 
 return promptRet
