@@ -125,26 +125,18 @@ function promptRet.create(title, description, primary, secondary, callback, prom
 		return
 	end
 
-	-- check if a Prompt GUI already exists in CoreGui
-	for _, gui in pairs(coreGui:GetChildren()) do
-		if gui.Name == "Prompt" then
-			return
-		end
+	-- CORE FIX: persistent marker in CoreGui
+	if coreGui:FindFirstChild("NexusPromptMarker") then
+		return
 	end
+	local marker = Instance.new("Folder")
+	marker.Name = "NexusPromptMarker"
+	marker.Parent = coreGui
 
 	local prompt = useStudio and script.Parent:FindFirstChild('Prompt') or game:GetObjects("rbxassetid://97206084643256")[1]
 	prompt.Enabled = false
-
-	if gethui then
-		prompt.Parent = gethui()
-	elseif syn and syn.protect_gui then 
-		syn.protect_gui(prompt)
-		prompt.Parent = coreGui
-	elseif not useStudio and coreGui:FindFirstChild("RobloxGui") then
-		prompt.Parent = coreGui:FindFirstChild("RobloxGui")
-	else
-		prompt.Parent = coreGui
-	end
+	prompt.Name = "Prompt"
+	prompt.Parent = coreGui
 
 	prompt.Policy.Title.Text = title
 	prompt.Policy.Notice.Text = description
@@ -165,6 +157,7 @@ function promptRet.create(title, description, primary, secondary, callback, prom
 	prompt.Policy.Actions.Primary.Interact.MouseButton1Click:Connect(function()
 		if debounce then return end
 		close(prompt, true, promptId)
+		marker:Destroy()
 		if callback then callback(true) end
 	end)
 
@@ -172,6 +165,7 @@ function promptRet.create(title, description, primary, secondary, callback, prom
 		prompt.Policy.Actions.Secondary.Interact.MouseButton1Click:Connect(function()
 			if debounce then return end
 			close(prompt, false, promptId)
+			marker:Destroy()
 			if callback then callback(false) end
 		end)
 	end
