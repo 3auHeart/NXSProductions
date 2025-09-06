@@ -1,18 +1,42 @@
 local promptRet = {}
+local runService = game:GetService("RunService")
+local coreGui = game:GetService("CoreGui")
+local textService = game:GetService("TextService")
+local tweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
 
 local useStudio
-local runService = game:GetService("RunService")
-local coreGui = game:GetService('CoreGui')
-local textService = game:GetService('TextService')
-local tweenService = game:GetService('TweenService')
-local HttpService = game:GetService("HttpService")
-local Workspace = game:GetService("Workspace")
-
 if runService:IsStudio() then
 	useStudio = true
 end
 
 local debounce = false
+local NexusPath = "Nexus/accepted_prompts.json"
+
+local function ensureFolderExists()
+	if not isfolder("Nexus") then
+		makefolder("Nexus")
+	end
+end
+
+local function loadAcceptedPrompts()
+	ensureFolderExists()
+	if isfile(NexusPath) then
+		local content = readfile(NexusPath)
+		local ok, data = pcall(HttpService.JSONDecode, HttpService, content)
+		if ok and type(data) == "table" then
+			return data
+		end
+	end
+	return {}
+end
+
+local function saveAcceptedPrompts(data)
+	ensureFolderExists()
+	writefile(NexusPath, HttpService:JSONEncode(data))
+end
+
+local acceptedPrompts = loadAcceptedPrompts()
 
 local function calculateDynamicSize(titleText, descriptionText)
 	local maxWidth = 520
@@ -70,20 +94,13 @@ local function open(prompt, finalSize)
 	debounce = false
 end
 
-local function close(prompt, isAccepted, promptId)
+local function close(prompt, accepted, promptId)
 	debounce = true
-
-	local NexusFolder = Workspace:FindFirstChild("Nexus") or Instance.new("Folder")
-	NexusFolder.Name = "Nexus"
-	NexusFolder.Parent = Workspace
-
-	if promptId and isAccepted then
-		local record = NexusFolder:FindFirstChild(promptId) or Instance.new("BoolValue")
-		record.Name = promptId
-		record.Value = true
-		record.Parent = NexusFolder
+	if accepted and promptId then
+		acceptedPrompts[promptId] = true
+		saveAcceptedPrompts(acceptedPrompts)
 	end
-	
+
 	tweenService:Create(prompt.Policy, TweenInfo.new(0.3, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {Size = UDim2.new(0, 430, 0, 110)}):Play()
 	tweenService:Create(prompt.Policy.Title, TweenInfo.new(0.35, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
 	tweenService:Create(prompt.Policy.Notice, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
@@ -100,14 +117,9 @@ local function close(prompt, isAccepted, promptId)
 end
 
 function promptRet.create(title, description, primary, secondary, callback, promptId)
-	local NexusFolder = Workspace:FindFirstChild("Nexus") or Instance.new("Folder")
-	NexusFolder.Name = "Nexus"
-	NexusFolder.Parent = Workspace
-
-	if promptId and NexusFolder:FindFirstChild(promptId) and NexusFolder[promptId].Value == true then
-		if callback then
-			callback(true)
-		end
+	if not promptId then promptId = title end
+	if acceptedPrompts[promptId] then
+		if callback then callback(true) end
 		return
 	end
 
@@ -116,7 +128,7 @@ function promptRet.create(title, description, primary, secondary, callback, prom
 			oldPrompt:Destroy()
 		end
 	end
-	
+
 	local prompt = useStudio and script.Parent:FindFirstChild('Prompt') or game:GetObjects("rbxassetid://97206084643256")[1]
 	prompt.Enabled = false
 
@@ -127,21 +139,18 @@ function promptRet.create(title, description, primary, secondary, callback, prom
 		prompt.Parent = coreGui
 	elseif not useStudio and coreGui:FindFirstChild("RobloxGui") then
 		prompt.Parent = coreGui:FindFirstChild("RobloxGui")
-	elseif not useStudio then
+	else
 		prompt.Parent = coreGui
 	end
 
 	prompt.Policy.Title.Text = title
 	prompt.Policy.Notice.Text = description
 	prompt.Policy.Actions.Primary.Title.Text = primary
-	
 	prompt.Policy.Title.TextWrapped = true
 	prompt.Policy.Notice.TextWrapped = true
-	prompt.Policy.Title.TextScaled = false
-	prompt.Policy.Notice.TextScaled = false
-	
+
 	local finalSize = calculateDynamicSize(title, description)
-	
+
 	if secondary == "" or secondary == nil then
 		if prompt.Policy.Actions:FindFirstChild("Secondary") then
 			prompt.Policy.Actions.Secondary:Destroy()
@@ -169,14 +178,14 @@ function promptRet.create(title, description, primary, secondary, callback, prom
 end
 
 function promptRet.isAccepted(promptId)
-	local NexusFolder = Workspace:FindFirstChild("Nexus")
-	return NexusFolder and NexusFolder:FindFirstChild(promptId) and NexusFolder[promptId].Value == true
+	if not promptId then return false end
+	return acceptedPrompts[promptId] == true
 end
 
 function promptRet.clearAcceptance(promptId)
-	local NexusFolder = Workspace:FindFirstChild("Nexus")
-	if NexusFolder and NexusFolder:FindFirstChild(promptId) then
-		NexusFolder[promptId]:Destroy()
+	if acceptedPrompts[promptId] then
+		acceptedPrompts[promptId] = nil
+		saveAcceptedPrompts(acceptedPrompts)
 	end
 end
 
