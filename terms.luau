@@ -131,9 +131,8 @@ function promptRet.create(title, description, primary, secondary, callback, prom
 		return
 	end
 
-	activePrompt = true
-
 	local prompt = useStudio and script.Parent:FindFirstChild('Prompt') or game:GetObjects("rbxassetid://97206084643256")[1]
+	activePrompt = prompt
 	prompt.Enabled = false
 
 	if gethui then
