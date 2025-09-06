@@ -28,7 +28,8 @@ local function open(prompt)
 	if prompt.Policy.Actions:FindFirstChild("Secondary") then
 		prompt.Policy.Actions.Secondary.Title.TextTransparency = 1
 	end
-	
+
+    prompt.Policy.Actions.Primary.BackgroundColor3 = Color3.fromRGB(129, 31, 255)
 	prompt.Policy.Visible = true
 	prompt.Enabled = true
 	
