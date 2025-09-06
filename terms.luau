@@ -6,7 +6,6 @@ local runService = game:GetService("RunService")
 local coreGui = game:GetService('CoreGui')
 local fin
 local tweenService = game:GetService('TweenService')
-local dataStoreService = game:GetService('DataStoreService')
 
 if runService:IsStudio() then
 	useStudio = true
@@ -15,33 +14,30 @@ end
 local debounce = false
 local acceptedPrompts = {}
 
-local function calculateTextSize(text, textLabel)
-	local textService = game:GetService("TextService")
-	local font = textLabel.Font
-	if font == Enum.Font.Unknown then
-		font = Enum.Font.SourceSans
-	end
-	return textService:GetTextSize(text, textLabel.TextSize, font, Vector2.new(math.huge, math.huge))
+local function calculateTextSize(text, textSize)
+	local baseWidth = string.len(text) * (textSize * 0.6)
+	local baseHeight = textSize * 1.5
+	return Vector2.new(baseWidth, baseHeight)
 end
 
 local function adjustUISize(prompt)
-	local titleSize = calculateTextSize(prompt.Policy.Title.Text, prompt.Policy.Title)
-	local noticeSize = calculateTextSize(prompt.Policy.Notice.Text, prompt.Policy.Notice)
-	local primarySize = calculateTextSize(prompt.Policy.Actions.Primary.Title.Text, prompt.Policy.Actions.Primary.Title)
+	local titleSize = calculateTextSize(prompt.Policy.Title.Text, prompt.Policy.Title.TextSize)
+	local noticeSize = calculateTextSize(prompt.Policy.Notice.Text, prompt.Policy.Notice.TextSize)
+	local primarySize = calculateTextSize(prompt.Policy.Actions.Primary.Title.Text, prompt.Policy.Actions.Primary.Title.TextSize)
 	
 	local minWidth = 520
 	local minHeight = 150
 	
-	local requiredWidth = math.max(titleSize.X + 40, noticeSize.X + 40, primarySize.X + 80)
-	local requiredHeight = math.max(titleSize.Y + noticeSize.Y + 80, minHeight)
+	local requiredWidth = math.max(titleSize.X + 60, noticeSize.X + 60, primarySize.X + 100)
+	local requiredHeight = math.max(titleSize.Y + noticeSize.Y + 100, minHeight)
 	
 	if prompt.Policy.Actions:FindFirstChild("Secondary") then
-		local secondarySize = calculateTextSize(prompt.Policy.Actions.Secondary.Title.Text, prompt.Policy.Actions.Secondary.Title)
-		requiredWidth = math.max(requiredWidth, primarySize.X + secondarySize.X + 120)
+		local secondarySize = calculateTextSize(prompt.Policy.Actions.Secondary.Title.Text, prompt.Policy.Actions.Secondary.Title.TextSize)
+		requiredWidth = math.max(requiredWidth, primarySize.X + secondarySize.X + 140)
 	end
 	
-	local finalWidth = math.max(minWidth, requiredWidth)
-	local finalHeight = math.max(minHeight, requiredHeight)
+	local finalWidth = math.max(minWidth, math.min(requiredWidth, 800))
+	local finalHeight = math.max(minHeight, math.min(requiredHeight, 400))
 	
 	return UDim2.new(0, finalWidth, 0, finalHeight)
 end
@@ -51,10 +47,11 @@ local function saveAcceptance(promptId)
 end
 
 local function hasAccepted(promptId)
-	return acceptedPrompts[promptId] or false
+	return acceptedPrompts[promptId] == true
 end
 
 local function open(prompt)
+	if debounce then return end
 	debounce = true
 	
 	local targetSize = adjustUISize(prompt)
@@ -72,7 +69,7 @@ local function open(prompt)
 		prompt.Policy.Actions.Secondary.Title.TextTransparency = 1
 	end
 
-    prompt.Policy.Actions.Primary.BackgroundColor3 = Color3.fromRGB(129, 31, 255)
+	prompt.Policy.Actions.Primary.BackgroundColor3 = Color3.fromRGB(129, 31, 255)
 	prompt.Policy.Visible = true
 	prompt.Enabled = true
 	
@@ -88,14 +85,17 @@ local function open(prompt)
 	tweenService:Create(prompt.Policy.Actions.Primary.Title, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextTransparency = 0.2}):Play()
 	tweenService:Create(prompt.Policy.Actions.Primary.Shadow, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {ImageTransparency = 0.7}):Play()
 	
-	if prompt.Policy.Actions:FindFirstChild("Secondary") and not fin then
+	if prompt.Policy.Actions:FindFirstChild("Secondary") then
 		tweenService:Create(prompt.Policy.Actions.Secondary.Title, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextTransparency = 0.6}):Play()
-		debounce = false
 	end
+	
+	debounce = false
 end
 
 local function close(prompt)
+	if debounce then return end
 	debounce = true
+	
 	tweenService:Create(prompt.Policy, TweenInfo.new(0.3, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {Size = UDim2.new(0, 430, 0, 110)}):Play()
 	tweenService:Create(prompt.Policy.Title, TweenInfo.new(0.35, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
 	tweenService:Create(prompt.Policy.Notice, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
@@ -103,25 +103,47 @@ local function close(prompt)
 	if prompt.Policy.Actions:FindFirstChild("Secondary") then
 		tweenService:Create(prompt.Policy.Actions.Secondary.Title, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
 	end
+	
 	tweenService:Create(prompt.Policy.Actions.Primary, TweenInfo.new(0.4, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
 	tweenService:Create(prompt.Policy.Actions.Primary.Title, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
 	tweenService:Create(prompt.Policy.Actions.Primary.Shadow, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {ImageTransparency = 1}):Play()
-		tweenService:Create(prompt.Policy, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
+	tweenService:Create(prompt.Policy, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
 	tweenService:Create(prompt.Policy.Shadow.Image, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {ImageTransparency = 1}):Play()
+	
 	task.wait(1)
-	prompt:Destroy()
+	if prompt and prompt.Parent then
+		prompt:Destroy()
+	end
 	fin = true
+	debounce = false
 end
 
 function promptRet.create(title, description, primary, secondary, callback, promptId)
-	promptId = promptId or (title .. description)
+	promptId = promptId or (title .. "_" .. description)
 	
 	if hasAccepted(promptId) then
-		if callback then callback(true) end
+		if callback then 
+			task.spawn(callback, true)
+		end
 		return
 	end
 	
-	local prompt = useStudio and script.Parent:FindFirstChild('Prompt') or game:GetObjects("rbxassetid://97206084643256")[1]
+	local success, prompt = pcall(function()
+		if useStudio then
+			return script.Parent:FindFirstChild('Prompt')
+		else
+			return game:GetObjects("rbxassetid://97206084643256")[1]
+		end
+	end)
+	
+	if not success or not prompt then
+		warn("Failed to load prompt UI")
+		if callback then 
+			task.spawn(callback, false)
+		end
+		return
+	end
+	
 	prompt.Enabled = false
 
 	if gethui then
@@ -135,27 +157,52 @@ function promptRet.create(title, description, primary, secondary, callback, prom
 		prompt.Parent = coreGui
 	end
 
-	prompt.Policy.Title.Text = title
-	prompt.Policy.Notice.Text = description
-	prompt.Policy.Actions.Primary.Title.Text = primary
-	if secondary == "" then
-		prompt.Policy.Actions.Secondary:Destroy()
+	prompt.Policy.Title.Text = title or ""
+	prompt.Policy.Notice.Text = description or ""
+	prompt.Policy.Actions.Primary.Title.Text = primary or "Accept"
+	
+	if not secondary or secondary == "" then
+		if prompt.Policy.Actions:FindFirstChild("Secondary") then
+			prompt.Policy.Actions.Secondary:Destroy()
+		end
 	else
-		prompt.Policy.Actions.Secondary.Title.Text = secondary
+		if prompt.Policy.Actions:FindFirstChild("Secondary") then
+			prompt.Policy.Actions.Secondary.Title.Text = secondary
+		end
 	end
 
-	prompt.Policy.Actions.Primary.Interact.MouseButton1Click:Connect(function()
+	local primaryConnection
+	local secondaryConnection
+	
+	primaryConnection = prompt.Policy.Actions.Primary.Interact.MouseButton1Click:Connect(function()
+		if primaryConnection then
+			primaryConnection:Disconnect()
+		end
+		if secondaryConnection then
+			secondaryConnection:Disconnect()
+		end
 		saveAcceptance(promptId)
 		close(prompt)
-		if callback then callback(true) end
+		if callback then 
+			task.spawn(callback, true)
+		end
 	end)
 
 	if prompt.Policy.Actions:FindFirstChild("Secondary") then
-		prompt.Policy.Actions.Secondary.Interact.MouseButton1Click:Connect(function()
+		secondaryConnection = prompt.Policy.Actions.Secondary.Interact.MouseButton1Click:Connect(function()
+			if primaryConnection then
+				primaryConnection:Disconnect()
+			end
+			if secondaryConnection then
+				secondaryConnection:Disconnect()
+			end
 			close(prompt)
-			if callback then callback(false) end
+			if callback then 
+				task.spawn(callback, false)
+			end
 		end)
 	end
+	
 	task.wait(0.5)
 	task.spawn(open, prompt)
 end
