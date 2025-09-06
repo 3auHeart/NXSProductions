@@ -38,7 +38,6 @@ local function saveAcceptedPrompts(data)
 end
 
 local acceptedPrompts = loadAcceptedPrompts()
-local activePrompt = nil
 
 local function calculateDynamicSize(titleText, descriptionText)
 	local maxWidth = 520
@@ -115,7 +114,6 @@ local function close(prompt, accepted, promptId)
 	tweenService:Create(prompt.Policy, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
 	tweenService:Create(prompt.Policy.Shadow.Image, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {ImageTransparency = 1}):Play()
 	task.wait(0.5)
-	activePrompt = nil
 	prompt:Destroy()
 end
 
@@ -127,12 +125,14 @@ function promptRet.create(title, description, primary, secondary, callback, prom
 		return
 	end
 
-	if activePrompt then
-		return
+	-- check if a Prompt GUI already exists in CoreGui
+	for _, gui in pairs(coreGui:GetChildren()) do
+		if gui.Name == "Prompt" then
+			return
+		end
 	end
 
 	local prompt = useStudio and script.Parent:FindFirstChild('Prompt') or game:GetObjects("rbxassetid://97206084643256")[1]
-	activePrompt = prompt
 	prompt.Enabled = false
 
 	if gethui then
