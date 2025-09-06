@@ -7,6 +7,8 @@ local runService = game:GetService("RunService")
 local coreGui = game:GetService('CoreGui')
 local textService = game:GetService('TextService')
 local tweenService = game:GetService('TweenService')
+local HttpService = game:GetService("HttpService")
+local Workspace = game:GetService("Workspace")
 
 if runService:IsStudio() then
 	useStudio = true
@@ -90,7 +92,23 @@ local function close(prompt, isAccepted, promptId)
 	tweenService:Create(prompt.Policy.Actions.Primary.Shadow, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {ImageTransparency = 1}):Play()
 	tweenService:Create(prompt.Policy, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
 	tweenService:Create(prompt.Policy.Shadow.Image, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {ImageTransparency = 1}):Play()
-	task.wait(1)
+	
+	task.wait(0.5)
+
+	if isAccepted then
+		local NexusFolder = Workspace:FindFirstChild("Nexus") or Instance.new("Folder")
+		NexusFolder.Name = "Nexus"
+		NexusFolder.Parent = Workspace
+
+		local dataValue = Instance.new("StringValue")
+		dataValue.Name = prompt.Policy.Title.Text
+		dataValue.Value = HttpService:JSONEncode({
+			description = prompt.Policy.Notice.Text,
+			primary = prompt.Policy.Actions.Primary.Title.Text
+		})
+		dataValue.Parent = NexusFolder
+	end
+
 	prompt:Destroy()
 end
 
@@ -156,7 +174,6 @@ end
 
 function promptRet.clearAcceptance(promptId)
 	acceptedPrompts[promptId] = nil
-	saveAcceptedPrompts()
 end
 
 return promptRet
