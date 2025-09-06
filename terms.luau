@@ -151,12 +151,10 @@ function promptRet.create(title, description, primary, secondary, callback, prom
 end
 
 function promptRet.isAccepted(promptId)
-	loadAcceptedPrompts()
 	return acceptedPrompts[promptId] == true
 end
 
 function promptRet.clearAcceptance(promptId)
-	loadAcceptedPrompts()
 	acceptedPrompts[promptId] = nil
 	saveAcceptedPrompts()
 end
