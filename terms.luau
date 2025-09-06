@@ -17,7 +17,11 @@ local acceptedPrompts = {}
 
 local function calculateTextSize(text, textLabel)
 	local textService = game:GetService("TextService")
-	return textService:GetTextSize(text, textLabel.TextSize, textLabel.Font, Vector2.new(math.huge, math.huge))
+	local font = textLabel.Font
+	if font == Enum.Font.Unknown then
+		font = Enum.Font.SourceSans
+	end
+	return textService:GetTextSize(text, textLabel.TextSize, font, Vector2.new(math.huge, math.huge))
 end
 
 local function adjustUISize(prompt)
