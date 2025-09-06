@@ -1,69 +1,38 @@
 local promptRet = {}
 
 local useStudio
+local acceptedPrompts = {}
 
 local runService = game:GetService("RunService")
 local coreGui = game:GetService('CoreGui')
-local fin
+local textService = game:GetService('TextService')
 local tweenService = game:GetService('TweenService')
-local dataStoreService = game:GetService('DataStoreService')
-local players = game:GetService('Players')
 
 if runService:IsStudio() then
 	useStudio = true
 end
 
 local debounce = false
-local promptDataStore = dataStoreService:GetDataStore("PromptAccepted")
-
-local function saveAcceptance(userId, promptId)
-	pcall(function()
-		promptDataStore:SetAsync(userId .. "_" .. promptId, true)
-	end)
-end
-
-local function hasAccepted(userId, promptId)
-	local success, result = pcall(function()
-		return promptDataStore:GetAsync(userId .. "_" .. promptId)
-	end)
-	return success and result == true
-end
 
 local function calculateDynamicSize(titleText, descriptionText)
-	local textService = game:GetService("TextService")
-	local baseWidth = 520
+	local maxWidth = 520
+	local minWidth = 450
 	local baseHeight = 150
-	local maxWidth = 800
-	local maxHeight = 400
 	
-	local titleParams = {
-		Text = titleText,
-		Size = 20,
-		Font = Enum.Font.GothamBold,
-		Parent = workspace
-	}
+	local titleBounds = textService:GetTextSize(titleText, 18, Enum.Font.SourceSansBold, Vector2.new(maxWidth - 40, math.huge))
+	local descBounds = textService:GetTextSize(descriptionText, 14, Enum.Font.SourceSans, Vector2.new(maxWidth - 40, math.huge))
 	
-	local descParams = {
-		Text = descriptionText,
-		Size = 14,
-		Font = Enum.Font.Gotham,
-		Parent = workspace
-	}
+	local titleHeight = titleBounds.Y
+	local descHeight = descBounds.Y
 	
-	local titleSize = textService:GetTextSize(titleText, 20, Enum.Font.GothamBold, Vector2.new(baseWidth - 60, math.huge))
-	local descSize = textService:GetTextSize(descriptionText, 14, Enum.Font.Gotham, Vector2.new(baseWidth - 60, math.huge))
+	local contentHeight = titleHeight + descHeight + 80
+	local finalHeight = math.max(baseHeight, contentHeight)
+	local finalWidth = math.max(minWidth, math.min(maxWidth, math.max(titleBounds.X + 40, descBounds.X + 40)))
 	
-	local neededWidth = math.max(titleSize.X + 60, descSize.X + 60, baseWidth)
-	local neededHeight = titleSize.Y + descSize.Y + 80
-	
-	neededWidth = math.min(neededWidth, maxWidth)
-	neededHeight = math.max(neededHeight, baseHeight)
-	neededHeight = math.min(neededHeight, maxHeight)
-	
-	return UDim2.new(0, neededWidth, 0, neededHeight)
+	return UDim2.new(0, finalWidth, 0, finalHeight)
 end
 
-local function open(prompt, dynamicSize)
+local function open(prompt, finalSize)
 	debounce = true
 	prompt.Policy.Size = UDim2.new(0, 450, 0, 120)
 
@@ -79,13 +48,13 @@ local function open(prompt, dynamicSize)
 		prompt.Policy.Actions.Secondary.Title.TextTransparency = 1
 	end
 
-    prompt.Policy.Actions.Primary.BackgroundColor3 = Color3.fromRGB(129, 31, 255)
+	prompt.Policy.Actions.Primary.BackgroundColor3 = Color3.fromRGB(129, 31, 255)
 	prompt.Policy.Visible = true
 	prompt.Enabled = true
 	
 	tweenService:Create(prompt.Policy, TweenInfo.new(0.4, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {BackgroundTransparency = 0}):Play()
 	tweenService:Create(prompt.Policy.Shadow.Image, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {ImageTransparency = 0.6}):Play()
-	tweenService:Create(prompt.Policy, TweenInfo.new(0.6, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = dynamicSize}):Play()
+	tweenService:Create(prompt.Policy, TweenInfo.new(0.6, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = finalSize}):Play()
 	task.wait(0.15)
 	tweenService:Create(prompt.Policy.Title, TweenInfo.new(0.35, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
 	task.wait(0.03)
@@ -95,14 +64,20 @@ local function open(prompt, dynamicSize)
 	tweenService:Create(prompt.Policy.Actions.Primary.Title, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextTransparency = 0.2}):Play()
 	tweenService:Create(prompt.Policy.Actions.Primary.Shadow, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {ImageTransparency = 0.7}):Play()
 	
-	if prompt.Policy.Actions:FindFirstChild("Secondary") and not fin then
+	if prompt.Policy.Actions:FindFirstChild("Secondary") then
 		tweenService:Create(prompt.Policy.Actions.Secondary.Title, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextTransparency = 0.6}):Play()
-		debounce = false
 	end
+	
+	debounce = false
 end
 
-local function close(prompt)
+local function close(prompt, isAccepted, promptId)
 	debounce = true
+	
+	if isAccepted and promptId then
+		acceptedPrompts[promptId] = true
+	end
+	
 	tweenService:Create(prompt.Policy, TweenInfo.new(0.3, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {Size = UDim2.new(0, 430, 0, 110)}):Play()
 	tweenService:Create(prompt.Policy.Title, TweenInfo.new(0.35, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
 	tweenService:Create(prompt.Policy.Notice, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
@@ -113,22 +88,17 @@ local function close(prompt)
 	tweenService:Create(prompt.Policy.Actions.Primary, TweenInfo.new(0.4, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
 	tweenService:Create(prompt.Policy.Actions.Primary.Title, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
 	tweenService:Create(prompt.Policy.Actions.Primary.Shadow, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {ImageTransparency = 1}):Play()
-		tweenService:Create(prompt.Policy, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
+	tweenService:Create(prompt.Policy, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
 	tweenService:Create(prompt.Policy.Shadow.Image, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {ImageTransparency = 1}):Play()
 	task.wait(1)
 	prompt:Destroy()
-	fin = true
 end
 
 function promptRet.create(title, description, primary, secondary, callback, promptId)
-	local userId = players.LocalPlayer.UserId
-	promptId = promptId or title:gsub("%s+", "_")
-	
-	if hasAccepted(userId, promptId) then
-		if callback then callback(true) end
+	if promptId and acceptedPrompts[promptId] then
 		return
 	end
-
+	
 	local prompt = useStudio and script.Parent:FindFirstChild('Prompt') or game:GetObjects("rbxassetid://97206084643256")[1]
 	prompt.Enabled = false
 
@@ -147,28 +117,45 @@ function promptRet.create(title, description, primary, secondary, callback, prom
 	prompt.Policy.Notice.Text = description
 	prompt.Policy.Actions.Primary.Title.Text = primary
 	
-	local dynamicSize = calculateDynamicSize(title, description)
+	prompt.Policy.Title.TextWrapped = true
+	prompt.Policy.Notice.TextWrapped = true
+	prompt.Policy.Title.TextScaled = false
+	prompt.Policy.Notice.TextScaled = false
 	
-	if secondary == "" then
-		prompt.Policy.Actions.Secondary:Destroy()
+	local finalSize = calculateDynamicSize(title, description)
+	
+	if secondary == "" or secondary == nil then
+		if prompt.Policy.Actions:FindFirstChild("Secondary") then
+			prompt.Policy.Actions.Secondary:Destroy()
+		end
 	else
 		prompt.Policy.Actions.Secondary.Title.Text = secondary
 	end
 
 	prompt.Policy.Actions.Primary.Interact.MouseButton1Click:Connect(function()
-		saveAcceptance(userId, promptId)
-		close(prompt)
+		if debounce then return end
+		close(prompt, true, promptId)
 		if callback then callback(true) end
 	end)
 
 	if prompt.Policy.Actions:FindFirstChild("Secondary") then
 		prompt.Policy.Actions.Secondary.Interact.MouseButton1Click:Connect(function()
-			close(prompt)
+			if debounce then return end
+			close(prompt, false, promptId)
 			if callback then callback(false) end
 		end)
 	end
+	
 	task.wait(0.5)
-	task.spawn(open, prompt, dynamicSize)
+	task.spawn(open, prompt, finalSize)
+end
+
+function promptRet.isAccepted(promptId)
+	return acceptedPrompts[promptId] == true
+end
+
+function promptRet.clearAcceptance(promptId)
+	acceptedPrompts[promptId] = nil
 end
 
 return promptRet
