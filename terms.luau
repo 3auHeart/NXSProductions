@@ -114,6 +114,9 @@ local function close(prompt, accepted, promptId)
 	tweenService:Create(prompt.Policy, TweenInfo.new(0.2, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {BackgroundTransparency = 1}):Play()
 	tweenService:Create(prompt.Policy.Shadow.Image, TweenInfo.new(0.25, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {ImageTransparency = 1}):Play()
 	task.wait(0.5)
+	if coreGui:FindFirstChild("NexusPromptMarker") then
+		coreGui.NexusPromptMarker:Destroy()
+	end
 	prompt:Destroy()
 end
 
@@ -125,7 +128,6 @@ function promptRet.create(title, description, primary, secondary, callback, prom
 		return
 	end
 
-	-- CORE FIX: persistent marker in CoreGui
 	if coreGui:FindFirstChild("NexusPromptMarker") then
 		return
 	end
@@ -157,7 +159,7 @@ function promptRet.create(title, description, primary, secondary, callback, prom
 	prompt.Policy.Actions.Primary.Interact.MouseButton1Click:Connect(function()
 		if debounce then return end
 		close(prompt, true, promptId)
-		marker:Destroy()
+		if marker.Parent then marker:Destroy() end
 		if callback then callback(true) end
 	end)
 
@@ -165,7 +167,7 @@ function promptRet.create(title, description, primary, secondary, callback, prom
 		prompt.Policy.Actions.Secondary.Interact.MouseButton1Click:Connect(function()
 			if debounce then return end
 			close(prompt, false, promptId)
-			marker:Destroy()
+			if marker.Parent then marker:Destroy() end
 			if callback then callback(false) end
 		end)
 	end
