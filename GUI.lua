@@ -1552,25 +1552,17 @@ function RayfieldLibrary:CreateWindow(Settings)
 	if Main:FindFirstChild('Notice') then Main.Notice.Visible = false end
 	Main.Shadow.Image.ImageTransparency = 1
 
-LoadingFrame.Title.TextTransparency = 1
-LoadingFrame.Subtitle.TextTransparency = 1
+	LoadingFrame.Title.TextTransparency = 1
+	LoadingFrame.Subtitle.TextTransparency = 1
 
-LoadingFrame.Version.TextTransparency = 0
+	LoadingFrame.Version.TextTransparency = 1
+	LoadingFrame.Title.Text = Settings.LoadingTitle or "Rayfield"
+	LoadingFrame.Subtitle.Text = Settings.LoadingSubtitle or "Interface Suite"
 
-local stroke = Instance.new("UIStroke")
-stroke.Parent = LoadingFrame.Version
-stroke.Thickness = 3
-stroke.Color = Color3.fromRGB(129, 31, 255)
-stroke.Transparency = 0.5
-
-LoadingFrame.Version.TextColor3 = Color3.fromRGB(129, 31, 255)
-
-LoadingFrame.Title.Text = Settings.LoadingTitle or "Rayfield"
-LoadingFrame.Subtitle.Text = Settings.LoadingSubtitle or "Interface Suite"
-
-if Settings.LoadingTitle ~= "Rayfield Interface Suite" then
-    LoadingFrame.Version.Text = "Modified Rayfield"
-end
+	if Settings.LoadingTitle ~= "Rayfield Interface Suite" then
+		LoadingFrame.Version.TextColor3 = Color3.fromRGB(129, 31, 255)
+		LoadingFrame.Version.Text = "Modified Rayfield"
+	end
 
 
 	if Settings.Icon and Settings.Icon ~= 0 and Topbar:FindFirstChild('Icon') then
@@ -1613,6 +1605,7 @@ end
 
 	Topbar.Visible = false
 	Elements.Visible = false
+	LoadingFrame.Version.TextColor3 = Color3.fromRGB(129, 31, 255)
 	LoadingFrame.Visible = true
 
 	if not Settings.DisableRayfieldPrompts then
