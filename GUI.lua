@@ -1552,22 +1552,23 @@ function RayfieldLibrary:CreateWindow(Settings)
 	if Main:FindFirstChild('Notice') then Main.Notice.Visible = false end
 	Main.Shadow.Image.ImageTransparency = 1
 
-	LoadingFrame.Title.TextTransparency = 1
-	LoadingFrame.Subtitle.TextTransparency = 1
-	local stroke = Instance.new("UIStroke")
-    stroke.Parent = LoadingFrame.Version
-    stroke.Thickness = 3
-    stroke.Color = Color3.fromRGB(129, 31, 255)
-    stroke.Transparency = 0.5
+LoadingFrame.Title.TextTransparency = 1
+LoadingFrame.Subtitle.TextTransparency = 1
 
+LoadingFrame.Version.TextTransparency = 0 -- visible
+local stroke = Instance.new("UIStroke")
+stroke.Parent = LoadingFrame.Version
+stroke.Thickness = 3
+stroke.Color = Color3.fromRGB(129, 31, 255)
+stroke.Transparency = 0.5
 
-	LoadingFrame.Version.TextTransparency = 1
-	LoadingFrame.Title.Text = Settings.LoadingTitle or "Rayfield"
-	LoadingFrame.Subtitle.Text = Settings.LoadingSubtitle or "Interface Suite"
+LoadingFrame.Title.Text = Settings.LoadingTitle or "Rayfield"
+LoadingFrame.Subtitle.Text = Settings.LoadingSubtitle or "Interface Suite"
 
-	if Settings.LoadingTitle ~= "Rayfield Interface Suite" then
-		LoadingFrame.Version.Text = "Modified Rayfield"
-	end
+if Settings.LoadingTitle ~= "Rayfield Interface Suite" then
+    LoadingFrame.Version.Text = "Modified Rayfield"
+end
+
 
 	if Settings.Icon and Settings.Icon ~= 0 and Topbar:FindFirstChild('Icon') then
 		Topbar.Icon.Visible = true
