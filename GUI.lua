@@ -1554,6 +1554,12 @@ function RayfieldLibrary:CreateWindow(Settings)
 
 	LoadingFrame.Title.TextTransparency = 1
 	LoadingFrame.Subtitle.TextTransparency = 1
+	local stroke = Instance.new("UIStroke")
+    stroke.Parent = LoadingFrame.Version
+    stroke.Thickness = 3
+    stroke.Color = Color3.fromRGB(129, 31, 255)
+    stroke.Transparency = 0.5
+
 
 	LoadingFrame.Version.TextTransparency = 1
 	LoadingFrame.Title.Text = Settings.LoadingTitle or "Rayfield"
