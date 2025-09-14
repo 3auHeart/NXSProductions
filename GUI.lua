@@ -1560,7 +1560,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 	LoadingFrame.Subtitle.Text = Settings.LoadingSubtitle or "Interface Suite"
 
 	if Settings.LoadingTitle ~= "Rayfield Interface Suite" then
-		LoadingFrame.Version.TextColor3 = Color3.fromRGB(129, 31, 255)
+		LoadingFrame.Version.TextColor3 = Color3.fromRGB(93, 0, 255)
 		LoadingFrame.Version.Text = "Modified Rayfield"
 	end
 
@@ -1605,7 +1605,7 @@ function RayfieldLibrary:CreateWindow(Settings)
 
 	Topbar.Visible = false
 	Elements.Visible = false
-	LoadingFrame.Version.TextColor3 = Color3.fromRGB(129, 31, 255)
+	LoadingFrame.Version.TextColor3 = Color3.fromRGB(93, 0, 255)
 	LoadingFrame.Visible = true
 
 	if not Settings.DisableRayfieldPrompts then
