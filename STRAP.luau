@@ -518,6 +518,22 @@ function syde:Modal(Modal)
 
 		local function closeModal()
 			activeModals -= 1
+			ModalInstance.Buttons.Cancel.Interactable = false
+			ModalInstance.Buttons.Confirm.Interactable = false
+			tweenservice:Create(ModalInstance, TweenInfo.new(0.75, Enum.EasingStyle.Quint), {Size = UDim2.new(0, 219,0, 147)}):Play()
+			tweenservice:Create(ModalInstance, TweenInfo.new(1, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1}):Play()
+			tweenservice:Create(ModalInstance.Title, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
+			tweenservice:Create(ModalInstance.UIStroke, TweenInfo.new(1, Enum.EasingStyle.Exponential), {Transparency = 1}):Play()
+			tweenservice:Create(ModalInstance.Content, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
+
+			tweenservice:Create(ModalInstance.Buttons.Confirm, TweenInfo.new(1, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1}):Play()
+			tweenservice:Create(ModalInstance.Buttons.Confirm.TextLabel, TweenInfo.new(1, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
+			tweenservice:Create(ModalInstance.Buttons.Confirm.UIStroke, TweenInfo.new(1, Enum.EasingStyle.Exponential), {Transparency = 1}):Play()
+
+			tweenservice:Create(ModalInstance.Buttons.Cancel, TweenInfo.new(1, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1}):Play()
+			tweenservice:Create(ModalInstance.Buttons.Cancel.TextLabel, TweenInfo.new(1, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
+			tweenservice:Create(ModalInstance.Buttons.Cancel.UIStroke, TweenInfo.new(1, Enum.EasingStyle.Exponential), {Transparency = 1}):Play()
+			task.wait(0.45)
 			ModalInstance:Destroy()
 		end
 
@@ -1206,29 +1222,30 @@ function CloseUI()
 	PAGES.Visible = false
 	WINDOW.Tab.Visible = false
 	UIClosed = true
-	tweenservice:Create(WINDOW, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {Size = UDim2.new(WINDOW.Size.X.Scale, WINDOW.Size.X.Offset, WINDOW.Size.Y.Scale, 200) }):Play()
-	tweenservice:Create(WINDOW.Top.div, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW.Top.Title, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {TextTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW.Top.Title.Sub, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {TextTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW.Shadow.ImageLabel, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW.resize, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW.Top.UHolder.Util.Mini.interact, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW.Top.UHolder.Util.Close.interact, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW.Top.UHolder.Util.Plugin.interact, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW.Top.UHolder.Util.Settings.interact, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW.Top.UHolder.expand, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW.Top.UHolder.Util.Plugin, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW.Top.UHolder.Util.Settings, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW.Top.UHolder.Frame, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW.UserInfo.ImageLabel.UIStroke, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {Transparency = 1 }):Play()
-	tweenservice:Create(WINDOW.UserInfo.ImageLabel, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW.UserInfo.ImageLabel, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW.UserInfo.ImageLabel.text.Username, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {TextTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW.UserInfo.ImageLabel.text.Display, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {TextTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW.UserInfo.ConnectionStatus.Status, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1 }):Play()
-	tweenservice:Create(WINDOW.UserInfo.ConnectionStatus.Status.TextLabel, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {TextTransparency = 1 }):Play()
-	task.wait(0.8)
+
+	WINDOW.BackgroundTransparency = 1
+	WINDOW.Size = UDim2.new(WINDOW.Size.X.Scale, WINDOW.Size.X.Offset, WINDOW.Size.Y.Scale, 200)
+	WINDOW.Top.div.BackgroundTransparency = 1
+	WINDOW.Top.Title.TextTransparency = 1
+	WINDOW.Top.Title.Sub.TextTransparency = 1
+	WINDOW.Shadow.ImageLabel.ImageTransparency = 1
+	WINDOW.resize.ImageTransparency = 1
+	WINDOW.Top.UHolder.Util.Mini.interact.ImageTransparency = 1
+	WINDOW.Top.UHolder.Util.Close.interact.ImageTransparency = 1
+	WINDOW.Top.UHolder.Util.Plugin.interact.ImageTransparency = 1
+	WINDOW.Top.UHolder.Util.Settings.interact.ImageTransparency = 1
+	WINDOW.Top.UHolder.expand.ImageTransparency = 1
+	WINDOW.Top.UHolder.Util.Plugin.BackgroundTransparency = 1
+	WINDOW.Top.UHolder.Util.Settings.BackgroundTransparency = 1
+	WINDOW.Top.UHolder.Frame.BackgroundTransparency = 1
+	WINDOW.UserInfo.ImageLabel.UIStroke.Transparency = 1
+	WINDOW.UserInfo.ImageLabel.ImageTransparency = 1
+	WINDOW.UserInfo.ImageLabel.BackgroundTransparency = 1
+	WINDOW.UserInfo.ImageLabel.text.Username.TextTransparency = 1
+	WINDOW.UserInfo.ImageLabel.text.Display.TextTransparency = 1
+	WINDOW.UserInfo.ConnectionStatus.Status.BackgroundTransparency = 1
+	WINDOW.UserInfo.ConnectionStatus.Status.TextLabel.TextTransparency = 1
+
 	if UIClosed == true then
 		syde:Notify({
 			Title = 'UI Is Closed',
@@ -1237,7 +1254,6 @@ function CloseUI()
 	end
 
 	WINDOW.Visible = false
-
 end
 
 function OpenUI()
