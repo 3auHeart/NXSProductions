@@ -53,9 +53,9 @@ local syde = {
 	Connections = {};
 	Comms = Instance.new('BindableEvent');
 	ParentOverride = nil;
-	Build = 'SY3';
-	ConfigEnabled = false;
-	ConfigFolder = 'Syde';
+	Build = 'NX3';
+	ConfigEnabled = true;
+	ConfigFolder = 'Nexus';
 	ConfigFile = 'Config';
 	Flags = {};
 	SettingsFlags = {};
@@ -65,7 +65,6 @@ local syde = {
 -- [ THEME MANAGEMENT ]
 function syde:UpdateTheme(Config)
 	if type(Config) ~= "table" then
-		warn("[UpdateTheme] Invalid configuration table")
 		return
 	end
 
@@ -81,12 +80,8 @@ function syde:UpdateTheme(Config)
 				end
 				table.insert(updatedKeys, key)
 			else
-				warn(("[UpdateTheme] Type mismatch for key '%s' (expected %s, got %s)"):format(
-					key, typeof(self.theme[key]), typeof(value)
-					))
 			end
 		else
-			warn("[UpdateTheme] Key '" .. key .. "' does not exist in theme")
 		end
 	end
 
@@ -111,7 +106,6 @@ end
 
 function syde:getdark(Color, val, mode)
 	if typeof(Color) ~= "Color3" or type(val) ~= "number" then
-		warn("[getdark] Invalid input: Expected (Color3, number)")
 		return Color
 	end
 
@@ -130,21 +124,18 @@ end
 
 function syde:HidePlaceHolder(instance, placeholder, recursive)
 	if typeof(instance) ~= "Instance" or type(placeholder) ~= "string" then
-		warn("[removeplaceholder] Invalid input: Expected (Instance, string)")
 		return
 	end
 
 	local target = instance:FindFirstChild(placeholder)
 
 	if not target then
-		warn(("[removeplaceholder] Placeholder '%s' not found in instance '%s'"):format(placeholder, instance.Name))
 		return
 	end
 
 	if target:IsA("GuiObject") then
 		target.Visible = false
 	else
-		warn(("[removeplaceholder] '%s' is not a GuiObject and cannot be hidden"):format(placeholder))
 		return
 	end
 
@@ -519,7 +510,6 @@ function syde:Modal(Modal)
 		ModalInstance.Buttons.Cancel.UIStroke.Transparency = 1
 
 		local function openModal()
-			print(activeModals)
 			tweenservice:Create(ModalInstance.Content, TweenInfo.new(0.75, Enum.EasingStyle.Quint), {Size = UDim2.new(1, ModalInstance.Content.Size.X.Offset, 1, ModalInstance.Content.TextBounds.Y)}):Play()
 			activeModals += 1
 			--	ModalInstance.Size = UDim2.new(0, ModalInstance.Size.X.Offset, 0, ModalInstance.Content.TextBounds.Y + 120)
@@ -543,7 +533,6 @@ function syde:Modal(Modal)
 
 		local function closeModal()
 			activeModals -= 1
-			print(activeModals)
 			ModalInstance.Buttons.Cancel.Interactable = false
 			ModalInstance.Buttons.Confirm.Interactable = false
 			tweenservice:Create(ModalInstance, TweenInfo.new(0.75, Enum.EasingStyle.Quint), {Size = UDim2.new(0, 219,0, 147)}):Play()
@@ -679,15 +668,14 @@ end
 do
 
 	function syde:Load(Config)
-		print('Syde 〡 Loader Loaded')
 		local LOADER = Loader
 		LOADER.Enabled = true
 		LOADER.Parent = coregui
 
 		-- PreLoad
-		Config.Name = Config.Name or 'Syde™'
+		Config.Name = Config.Name or 'Nexus™'
 		Config.Logo = Config.Logo or 'rbxassetid://14554547135'
-		Config.ConfigFolder = Config.ConfigFolder or 'syde'
+		Config.ConfigFolder = Config.ConfigFolder or 'nexus'
 		Config.Status = Config.Status or false
 		Config.Accent = Config.Accent or syde.theme.Accent
 		Config.HitBox = Config.HitBox or syde.theme.HitBox
@@ -755,7 +743,6 @@ do
 			end
 
 			if largeCount > 1 or smallCount > 2 then
-				warn("[SYDE] Only 1 Large block and 2 Small blocks are allowed in Socials.")
 				LoaderConfig.Socials = nil
 			else
 				for _, social in ipairs(LoaderConfig.Socials) do
@@ -883,7 +870,6 @@ do
 					end
 
 					if social.CopyToClip then
-						print('Copied')
 					end
 				end
 			end
@@ -959,7 +945,7 @@ do
 			TweenWorkLabel(1,'rbxassetid://136002400178503', 'Verifying Configuration...')
 
 			if Config.ConfigurationSaving and Config.ConfigurationSaving.Enabled then
-				local folderName = Config.ConfigurationSaving.FolderName or "SydeSec"
+				local folderName = Config.ConfigurationSaving.FolderName or "NexusSec"
 				local fileName = Config.ConfigurationSaving.FileName or "default_config"
 				local fullPath = folderName .. "/" .. fileName .. ".lua"
 
@@ -973,7 +959,6 @@ do
 						makefolder(folderName)
 					end)
 					if not success then
-						warn("Syde 〡 Failed to create folder:", err)
 					end
 				end
 
@@ -987,15 +972,14 @@ do
 				end)
 
 				if not success then
-					warn("Syde 〡 File write/read blocked or failed:", err)
 				end
 			end
 
 
 			TweenWorkLabel(1,'rbxassetid://105810189969774', 'Cleaning Things Up...')
-			local UI_TAG = "sydeUILoader"
-			local MARKER_NAME = "SYDEUIDetector"
-			local INTERNAL_UUID = ("SYDE-" .. tostring(game.JobId):gsub("-", "") .. tostring(tick())):gsub("%.", "")
+			local UI_TAG = "NexusLoader"
+			local MARKER_NAME = "NexusUi"
+			local INTERNAL_UUID = ("NEX-" .. tostring(game.JobId):gsub("-", "") .. tostring(tick())):gsub("%.", "")
 			local PROTECTION_EVENT = Instance.new("BindableEvent")
 			local HttpService = game:GetService("HttpService")
 
@@ -1017,7 +1001,6 @@ do
 			end)
 
 			if not successLibrary or not Library then
-				warn("Syde 〡 Failed to load Library.")
 				return
 			end
 
@@ -1038,7 +1021,6 @@ do
 				while Library and Library.Parent do
 					task.wait(1)
 					if Library.Parent ~= coregui then
-						warn("Syde 〡 UI moved. Restoring...")
 						pcall(function()
 							Library.Parent = coregui
 						end)
@@ -1052,7 +1034,6 @@ do
 					task.wait(2)
 				end
 
-				warn("Syde 〡 UI removed. Reinjection in progress...")
 				local success, lib = pcall(function()
 					return Library -- Replace with GetObjects if needed
 				end)
@@ -1073,12 +1054,10 @@ do
 
 			if Config.AutoJoinDiscord and Config.AutoJoinDiscord.Enabled then
 				local discordConfig = Config.AutoJoinDiscord
-				local rootFolder = Config.ConfigurationSaving and Config.ConfigurationSaving.FolderName or "SydeSec"
+				local rootFolder = Config.ConfigurationSaving and Config.ConfigurationSaving.FolderName or "NexusSec"
 				local discordFolder = rootFolder .. "/DiscordInvites"
 				local inviteCode = discordConfig.Invite
 				local inviteFilePath = discordFolder .. "/" .. inviteCode .. ".txt"
-
-				warn("Syde 〡 Discord AutoJoin enabled. Preparing to send invite:", inviteCode)
 
 				-- Ensure folder exists
 				if isfolder and not isfolder(discordFolder) then
@@ -1086,15 +1065,12 @@ do
 						makefolder(discordFolder)
 					end)
 					if folderSuccess then
-						print("Syde 〡 Created DiscordInvites folder at:", discordFolder)
 					else
-						warn("Syde 〡 Failed to create DiscordInvites folder:", folderErr)
 					end
 				end
 
 				local shouldPrompt = true
 				if isfile and discordConfig.RememberJoins and isfile(inviteFilePath) then
-					print("Syde 〡 Discord invite '" .. inviteCode .. "' already joined. Skipping prompt.")
 					shouldPrompt = false
 				end
 
@@ -1119,12 +1095,9 @@ do
 						end)
 
 						if reqSuccess then
-							print("Syde 〡 Discord invite sent successfully to:", inviteCode)
 						else
-							warn("Syde 〡 Failed to send Discord invite:", reqErr)
 						end
 					else
-						warn("Syde 〡 Request function not available — cannot send Discord invite.")
 					end
 
 					if discordConfig.RememberJoins then
@@ -1133,9 +1106,7 @@ do
 						end)
 
 						if writeSuccess then
-							print("Syde 〡 Logged Discord invite join for:", inviteCode)
 						else
-							warn("Syde 〡 Failed to write join log for invite:", writeErr)
 						end
 					end
 				end
@@ -1195,7 +1166,6 @@ function LoadConfig(Configuration)
 				elseif Flag.StarterValue then
 					Flag.StarterValue = FlagValue
 				else
-					warn("Syde 〡 Unsupported flag type or missing setter for flag: " .. FlagName)
 				end
 			end)
 		end
@@ -1386,7 +1356,6 @@ function syde:Init(library)
 		end)
 
 		if not successLibrary or not Library then
-			warn("Syde 〡 Failed to load Library.")
 			return
 		end
 
@@ -1407,7 +1376,6 @@ function syde:Init(library)
 			while Library and Library.Parent do
 				task.wait(1)
 				if Library.Parent ~= coregui then
-					warn("Syde 〡 UI moved. Restoring...")
 					pcall(function()
 						Library.Parent = coregui
 					end)
@@ -1421,7 +1389,6 @@ function syde:Init(library)
 				task.wait(2)
 			end
 
-			warn("Syde 〡 UI removed. Reinjection in progress...")
 			local success, lib = pcall(function()
 				return Library -- Replace with GetObjects if needed
 			end)
@@ -1644,7 +1611,6 @@ function syde:Init(library)
 				if targetPage then
 					pageLayout:JumpTo(targetPage)
 				else
-					warn("Page not found for tab:", v.Name)
 				end
 			end)
 		end
@@ -1770,10 +1736,8 @@ function syde:Init(library)
 						if ButtonData.CallBack then
 							local success, errorMsg = pcall(ButtonData.CallBack)
 							if not success then
-								warn(`[ Button Error: { button.Name } ] Callback Error: { errorMsg }`)
 							end
 						else
-							warn(`[ CallBack Missing: { ButtonData.Name } ] No Function Assigned`)
 						end
 					end)
 
@@ -1843,10 +1807,8 @@ function syde:Init(library)
 							if ButtonData.CallBack then
 								local success, errorMsg = pcall(ButtonData.CallBack)
 								if not success then
-									warn(`[ Button Error: { button.Name } ] Callback Error: { errorMsg }`)
 								end
 							else
-								warn(`[ CallBack Missing: { ButtonData.Name } ] No Function Assigned`)
 							end
 							tweenservice:Create(button, TweenInfo.new(0.34, Enum.EasingStyle.Exponential), { BackgroundColor3 = Color3.fromRGB(24, 24, 24) }):Play()
 							tweenservice:Create(button.UIStroke.UIGradient, TweenInfo.new(0.1, Enum.EasingStyle.Linear), { Offset = Vector2.new(-1, 0) }):Play()
@@ -1986,7 +1948,6 @@ function syde:Init(library)
 						TextInputData.CallBack(textBox.Text)
 					end)
 					if not success then
-						warn("Error in TextInput callback [" .. textinput.Name .. "]: " .. tostring(errorMsg))
 					end
 
 					if TextInputData.ClearOnLost then
@@ -2004,7 +1965,6 @@ function syde:Init(library)
 						TextInputData.CallBack(textBox.Text)
 					end)
 					if not success then
-						warn("Error in TextInput callback [" .. textinput.Name .. "]: " .. tostring(errorMsg))
 					end
 
 					if TextInputData.ClearOnLost then
@@ -2428,7 +2388,6 @@ function syde:Init(library)
 						HSV[3] = Value
 						updatestuff()
 					else
-						warn("Failed to convert hex to color:", result)
 					end
 				end)
 
@@ -2456,10 +2415,8 @@ function syde:Init(library)
 							colorpicker.HueValues.RGB.V.RGBBox.Text = ''
 							updatestuff()
 						else
-							warn("RGB values must be between 0 and 255.")
 						end
 					else
-						warn("Invalid RGB format. Please use the format 'R,G,B' (e.g., 16,16,16).")
 					end
 				end)
 
@@ -2760,7 +2717,6 @@ function syde:Init(library)
 								Options.CallBack(newValue)
 							end)
 							if not success then
-								warn("[CALLBACK ERROR][" .. Slider.Name .. "]: " .. tostring(errorMsg))
 							end
 
 
@@ -2842,7 +2798,6 @@ function syde:Init(library)
 							Options.CallBack(NewVal)
 						end)
 						if not success then
-							warn("[CALLBACK ERROR][" .. Slider.Name .. "]: " .. tostring(result))
 						end
 
 						Options.StarterValue = NewVal
@@ -2967,7 +2922,6 @@ function syde:Init(library)
 						local success, result = pcall(KeybindData.CallBack, KeybindData.Key)
 						if not KeybindData.Holding then
 							if not success then
-								warn(`[ Keybind: { KeyBind.Name } ] Callback Error: { result }`)
 							end
 						else
 							if KeybindData.Hold then
@@ -3051,7 +3005,6 @@ function syde:Init(library)
 					end)
 
 					if not success then
-						warn("[CALLBACK ERROR][" .. toggle.Name .. "]: " .. tostring(errorMsg))
 					end
 
 				end)
@@ -3220,7 +3173,6 @@ function syde:Init(library)
 									ToggleData.CallBack(ToggleData.Value)
 								end)
 								if not success then
-									warn("[CALLBACK ERROR][" .. toggle.Name .. "]: " .. tostring(errorMsg))
 								end
 							end
 						end
@@ -3271,7 +3223,6 @@ function syde:Init(library)
 					end)
 
 					if not success then
-						warn("[CALLBACK ERROR][" .. toggle.Name .. "]: " .. tostring(errorMsg))
 					end
 
 				end
@@ -3394,7 +3345,6 @@ function syde:Init(library)
 				elseif v.StarterValue ~= nil then
 					Data[flag] = v.StarterValue
 				else
-					warn("[DEBUG] Skipping flag", flag, "no valid value found")
 				end
 			end
 
@@ -3428,7 +3378,6 @@ function syde:Init(library)
 			end)
 
 			if not success or typeof(data) ~= "table" then
-				warn("[DEBUG] Failed to decode settings:", data)
 				return
 			end
 
@@ -3443,7 +3392,6 @@ function syde:Init(library)
 						setting.Value = val
 					end
 				else
-					warn("[DEBUG] No matching setting flag found for:", flag)
 				end
 			end
 
@@ -3767,8 +3715,6 @@ function syde:Init(library)
 
 		local function ClosePlugins()
 
-			print('closed')
-
 			tweenservice:Create(WINDOW.Plugins, TweenInfo.new(0.65, Enum.EasingStyle.Quint), { Position = UDim2.new(0.5, 176,0.5, -200) }):Play()
 			tweenservice:Create(WINDOW.Plugins, TweenInfo.new(0.35, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 200,0, 110) }):Play()
 
@@ -4078,11 +4024,9 @@ function syde:Init(library)
 						if ButtonData.CallBack then
 							local success, errorMsg = pcall(ButtonData.CallBack)
 							if not success then
-								warn(`[ Button Error: { button.Name } ] Callback Error: { errorMsg }`)
 
 							end
 						else
-							warn(`[ CallBack Missing: { button.Name } ] No Function Assigned`)
 						end
 					end
 				end)
@@ -4154,10 +4098,8 @@ function syde:Init(library)
 							if ButtonData.CallBack then
 								local success, errorMsg = pcall(ButtonData.CallBack)
 								if not success then
-									warn("[CALLBACK ERROR]:", errorMsg)
 								end
 							else
-								warn("[CALLBACK MISSING]: No Function Assigned To", ButtonData.Title)
 							end
 						end
 						tweenservice:Create(button, TweenInfo.new(0.34, Enum.EasingStyle.Exponential), { BackgroundColor3 = Color3.fromRGB(24, 24, 24) }):Play()
@@ -4282,7 +4224,6 @@ function syde:Init(library)
 					end)
 
 					if not success then
-						warn(`[ Toggle Error: { toggle.Name } ] Callback Error: { errorMsg }`)
 					end
 
 					SaveConfig()
@@ -4454,7 +4395,6 @@ function syde:Init(library)
 									ToggleData.CallBack(ToggleData.Value)
 								end)
 								if not success then
-									warn(`[ Toggle Error: { toggle.Name } ] Callback Error: { errorMsg }`)
 								end
 
 								SaveConfig()
@@ -4508,7 +4448,6 @@ function syde:Init(library)
 				end)
 
 				if not success then
-					warn(`[ Toggle Error: { toggle.Name } ] Callback Error: { errorMsg }`)
 				end
 
 				SaveConfig()
@@ -4624,7 +4563,6 @@ function syde:Init(library)
 								Options.CallBack(newValue)
 							end)
 							if not success then
-								warn(`[ Slider Error: { slider.Name } ] Callback Error: { errorMsg }`)
 							end
 
 							Options.StarterValue = newValue
@@ -4707,7 +4645,6 @@ function syde:Init(library)
 						Options.CallBack(NewVal)
 					end)
 					if not success then
-						warn(`[ Slider Error: { slider.Name } ] Callback Error: { result }`)
 					end
 
 					Options.StarterValue = NewVal
@@ -5091,7 +5028,6 @@ function syde:Init(library)
 					TextInputData.CallBack(textBox.Text)
 				end)
 				if not success then
-					warn(`[ TextInput Error: { textinput.Name } ] Callback Error: { errorMsg }`)
 				end
 
 				if TextInputData.ClearOnLost then
@@ -5109,7 +5045,6 @@ function syde:Init(library)
 					TextInputData.CallBack(textBox.Text)
 				end)
 				if not success then
-					warn(`[ TextInput Error: { textinput.Name } ] Callback Error: { errorMsg }`)
 				end
 
 				if TextInputData.ClearOnLost then
@@ -5533,7 +5468,6 @@ function syde:Init(library)
 					HSV[3] = Value
 					updatestuff()
 				else
-					warn("Failed to convert hex to color:", result)
 				end
 			end)
 
@@ -5561,10 +5495,8 @@ function syde:Init(library)
 						colorpicker.HueValues.RGB.V.RGBBox.Text = ''
 						updatestuff()
 					else
-						warn("RGB values must be between 0 and 255.")
 					end
 				else
-					warn("Invalid RGB format. Please use the format 'R,G,B' (e.g., 16,16,16).")
 				end
 			end)
 
@@ -5776,7 +5708,6 @@ function syde:Init(library)
 					local success, result = pcall(KeybindData.CallBack)
 					if not KeybindData.Holding then
 						if not success then
-							warn(`[ Keybind: {KeyBind.Name} ] Callback Error: { result }`)
 						end
 					else
 						if KeybindData.Hold then
@@ -6219,7 +6150,6 @@ function syde:Init(library)
 					tweenservice:Create(star.glow.UIScale, TweenInfo.new(0.55, Enum.EasingStyle.Exponential), {Scale = 1.3}):Play()
 					task.wait(0.35)
 					tweenservice:Create(star.glow.UIScale, TweenInfo.new(0.55, Enum.EasingStyle.Exponential), {Scale = 1}):Play()
-					print(selected)
 				end)
 			end
 
@@ -6243,9 +6173,7 @@ function syde:Init(library)
 						Content = 'Configuration loaded successfully from Save File.',
 						Duration = 3,
 					}
-					print("Configuration loaded successfully from a previous session.")
 				elseif not success then
-					warn("Syde Configurations Error 〡 " .. tostring(result))
 				end
 			end
 		end
