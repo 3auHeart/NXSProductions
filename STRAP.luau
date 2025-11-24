@@ -1299,9 +1299,7 @@ function ToggleUI()
 		end
 	end
 
-	task.delay(0.4, function()
-		BOUNCE = false
-	end)
+	BOUNCE = false
 end
 
 
