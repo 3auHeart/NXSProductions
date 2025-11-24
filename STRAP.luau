@@ -1233,6 +1233,7 @@ local TOPBAR = WINDOW.Top
 local TABS = WINDOW.Tab.ScrollingFrame
 local PAGES = WINDOW.Pages
 local settingsOpen = false
+local pluginsOpen = false
 local UIClosed = false
 local Connected = false
 local UserInfoDisabled = false
@@ -1275,8 +1276,10 @@ function CloseUI()
 	tweenservice:Create(WINDOW.resize, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
 	tweenservice:Create(WINDOW.Top.UHolder.Util.Mini.interact, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
 	tweenservice:Create(WINDOW.Top.UHolder.Util.Close.interact, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
+	tweenservice:Create(WINDOW.Top.UHolder.Util.Plugin.interact, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
 	tweenservice:Create(WINDOW.Top.UHolder.Util.Settings.interact, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
 	tweenservice:Create(WINDOW.Top.UHolder.expand, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
+	tweenservice:Create(WINDOW.Top.UHolder.Util.Plugin, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1 }):Play()
 	tweenservice:Create(WINDOW.Top.UHolder.Util.Settings, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1 }):Play()
 	tweenservice:Create(WINDOW.Top.UHolder.Frame, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1 }):Play()
 	tweenservice:Create(WINDOW.UserInfo.ImageLabel.UIStroke, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {Transparency = 1 }):Play()
@@ -1312,8 +1315,10 @@ function OpenUI()
 	tweenservice:Create(WINDOW.resize, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0 }):Play()
 	tweenservice:Create(WINDOW.Top.UHolder.Util.Mini.interact, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0 }):Play()
 	tweenservice:Create(WINDOW.Top.UHolder.Util.Close.interact, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0 }):Play()
+	tweenservice:Create(WINDOW.Top.UHolder.Util.Plugin.interact, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0.7 }):Play()
 	tweenservice:Create(WINDOW.Top.UHolder.Util.Settings.interact, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0.7 }):Play()
 	tweenservice:Create(WINDOW.Top.UHolder.expand, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0.8 }):Play()
+	tweenservice:Create(WINDOW.Top.UHolder.Util.Plugin, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0.05 }):Play()
 	tweenservice:Create(WINDOW.Top.UHolder.Util.Settings, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0.05 }):Play()
 	tweenservice:Create(WINDOW.Top.UHolder.Frame, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0 }):Play()
 	tweenservice:Create(WINDOW.UserInfo.ImageLabel.UIStroke, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {Transparency = 0 }):Play()
@@ -3731,6 +3736,66 @@ function syde:Init(library)
 			WINDOW.dim.Visible = false
 		end
 		
+		local function OpenPlugins()
+
+			WINDOW.Plugins.Visible = true
+			WINDOW.dim.Visible = true
+
+			tweenservice:Create(WINDOW.Plugins, TweenInfo.new(0.65, Enum.EasingStyle.Quint), { Position = UDim2.new(0.5, 0,0.5, 0) }):Play()
+			tweenservice:Create(WINDOW.Plugins.Close, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { ImageTransparency = 1 }):Play()
+
+			tweenservice:Create(WINDOW.Plugins, TweenInfo.new(0.35, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 500,0, 375) }):Play()
+			tweenservice:Create(WINDOW.dim, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0.3 }):Play()
+			tweenservice:Create(WINDOW.Plugins.Close, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { ImageTransparency = 0 }):Play()
+
+			tweenservice:Create(WINDOW.Plugins.void, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), {  BackgroundTransparency = 0 }):Play()
+			tweenservice:Create(WINDOW.Plugins.void2, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0 }):Play()
+
+			tweenservice:Create(WINDOW.Plugins.LoadFrame.void1, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), {  BackgroundTransparency = 0 }):Play()
+			tweenservice:Create(WINDOW.Plugins.LoadFrame.void2, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0 }):Play()
+
+			tweenservice:Create(WINDOW.Plugins, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0 }):Play()
+			tweenservice:Create(WINDOW.Plugins.Shadow.ImageLabel, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { ImageTransparency = 0.86 }):Play()
+			tweenservice:Create(WINDOW.Plugins.LoadFrame.warn, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { ImageTransparency = 0 }):Play()
+
+			tweenservice:Create(WINDOW.Plugins.LoadFrame.refresh.interact, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { ImageTransparency = 0 }):Play()
+
+			tweenservice:Create(WINDOW.Plugins.LoadFrame.warn.TextLabel, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { TextTransparency = 0 }):Play()
+			tweenservice:Create(WINDOW.Plugins.LoadFrame.warn.notice, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { TextTransparency = 0 }):Play()
+			tweenservice:Create(WINDOW.Plugins.TextLabel, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { TextTransparency = 0 }):Play()
+		end
+
+		local function ClosePlugins()
+
+			print('closed')
+
+			tweenservice:Create(WINDOW.Plugins, TweenInfo.new(0.65, Enum.EasingStyle.Quint), { Position = UDim2.new(0.5, 176,0.5, -200) }):Play()
+			tweenservice:Create(WINDOW.Plugins, TweenInfo.new(0.35, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 200,0, 110) }):Play()
+
+			tweenservice:Create(WINDOW.dim, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1 }):Play()
+			tweenservice:Create(WINDOW.Plugins.Close, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { ImageTransparency = 1 }):Play()
+
+			tweenservice:Create(WINDOW.Plugins.void, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), {  BackgroundTransparency = 1 }):Play()
+			tweenservice:Create(WINDOW.Plugins.void2, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1 }):Play()
+
+			tweenservice:Create(WINDOW.Plugins.LoadFrame.void1, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), {  BackgroundTransparency = 1 }):Play()
+			tweenservice:Create(WINDOW.Plugins.LoadFrame.void2, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1 }):Play()
+
+			tweenservice:Create(WINDOW.Plugins, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1 }):Play()
+			tweenservice:Create(WINDOW.Plugins.Shadow.ImageLabel, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { ImageTransparency = 1 }):Play()
+			tweenservice:Create(WINDOW.Plugins.LoadFrame.warn, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { ImageTransparency = 1 }):Play()
+
+			tweenservice:Create(WINDOW.Plugins.LoadFrame.refresh.interact, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { ImageTransparency = 1 }):Play()
+
+			tweenservice:Create(WINDOW.Plugins.LoadFrame.warn.TextLabel, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { TextTransparency = 1 }):Play()
+			tweenservice:Create(WINDOW.Plugins.TextLabel, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { TextTransparency = 1 }):Play()
+			tweenservice:Create(WINDOW.Plugins.LoadFrame.warn.notice, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { TextTransparency = 1 }):Play()
+			tweenservice:Create(WINDOW.Plugins.Close, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), { ImageTransparency = 1 }):Play()
+
+			task.wait(0.4)
+			WINDOW.dim.Visible = false
+		end
+		
 		local currentLockedTabData = nil
 		local lockedframe
 
@@ -3899,6 +3964,19 @@ function syde:Init(library)
 				CloseSettings()
 			end
 		end)
+		
+		WINDOW.Top.UHolder.Util.Plugin.interact.MouseButton1Click:Connect(function()
+			if ldata.first == "Plugins" then return end
+			ldata.previousTab = ldata.first 
+			ldata.first = "Plugins"
+			ChangeName('Plugins')
+
+			if not pluginsOpen then
+				pluginsOpen = true
+				OpenPlugins()
+			end
+
+			tweenservice:Create(WINDOW.Top.UHolder.Util.Plugin.interact, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {ImageTransparency = 0}):Play()
 
 			-- Make all tab buttons appear disabled
 			for _, otherTab in ipairs(TABS:GetChildren()) do
@@ -3909,6 +3987,11 @@ function syde:Init(library)
 			end
 
 		end)
+
+		WINDOW.Plugins.Close.MouseButton1Click:Connect(function()
+			if not ldata.previousTab then return end
+			ldata.first = ldata.previousTab
+			ChangeName(ldata.previousTab)
 
 			-- Restore all normal pages
 			for _, otherPage in ipairs(PAGES:GetChildren()) do
@@ -3922,6 +4005,12 @@ function syde:Init(library)
 					ApplyTabStyle(otherTab, otherTab.Name == ldata.previousTab) 
 					otherTab.interact.Active = true 
 				end
+			end
+
+			if pluginsOpen then
+				pluginsOpen = false
+				tweenservice:Create(WINDOW.Top.UHolder.Util.Plugin.interact, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), {ImageTransparency = 0.7}):Play()
+				ClosePlugins()
 			end
 
 		end)
@@ -6169,5 +6258,3 @@ function syde:Init(library)
 
 end
 return syde
-
-
