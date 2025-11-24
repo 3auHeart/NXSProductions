@@ -22,7 +22,7 @@ local sharedModule = {}
 local resizing = false
 
 local Loader =          game:GetObjects("rbxassetid://110221114597158")[1]
-local Library =         game:GetObjects("rbxassetid://123800669522471")[1]
+local Library =         game:GetObjects("rbxassetid://89761418653710")[1]
 
 Library.Enabled = false
 local loaded = false
@@ -1232,6 +1232,7 @@ function CloseUI()
 	WINDOW.Top.UHolder.Util.Mini.interact.ImageTransparency = 1
 	WINDOW.Top.UHolder.Util.Close.interact.ImageTransparency = 1
 	WINDOW.Top.UHolder.Util.Settings.interact.ImageTransparency = 1
+	WINDOW.Top.UHolder.expand.ImageTransparency = 1
 	WINDOW.Top.UHolder.Util.Settings.BackgroundTransparency = 1
 	WINDOW.Top.UHolder.Frame.BackgroundTransparency = 1
 	WINDOW.UserInfo.ImageLabel.UIStroke.Transparency = 1
@@ -1267,6 +1268,7 @@ function OpenUI()
 	tweenservice:Create(WINDOW.Top.UHolder.Util.Mini.interact, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0 }):Play()
 	tweenservice:Create(WINDOW.Top.UHolder.Util.Close.interact, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0 }):Play()
 	tweenservice:Create(WINDOW.Top.UHolder.Util.Settings.interact, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0.7 }):Play()
+	tweenservice:Create(WINDOW.Top.UHolder.expand, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0.8 }):Play()
 	tweenservice:Create(WINDOW.Top.UHolder.Util.Settings, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0.05 }):Play()
 	tweenservice:Create(WINDOW.Top.UHolder.Frame, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0 }):Play()
 	tweenservice:Create(WINDOW.UserInfo.ImageLabel.UIStroke, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {Transparency = 0 }):Play()
@@ -1507,6 +1509,34 @@ function syde:Init(library)
 	end)
 
 	-- got lazy
+	local expand = TOPBAR.UHolder:WaitForChild('expand')
+
+	local expanded = false
+
+	if not expanded then
+		tweenservice:Create(TOPBAR.UHolder, TweenInfo.new(1.4, Enum.EasingStyle.Quint), {Size = UDim2.new(0, 70,1, 0)}):Play()
+		tweenservice:Create(expand, TweenInfo.new(1.4, Enum.EasingStyle.Exponential), {Rotation = 0}):Play()
+	end
+
+	expand.MouseButton1Click:Connect(function()
+		if not expanded then
+			expanded = true
+			tweenservice:Create(TOPBAR.UHolder, TweenInfo.new(1.4, Enum.EasingStyle.Quint), {Size = UDim2.new(0, 140,1, 0)}):Play()
+			tweenservice:Create(expand, TweenInfo.new(1.4, Enum.EasingStyle.Exponential), {Rotation = -180}):Play()
+		else
+			expanded = false
+			tweenservice:Create(TOPBAR.UHolder, TweenInfo.new(1.4, Enum.EasingStyle.Quint), {Size = UDim2.new(0, 70,1, 0)}):Play()
+			tweenservice:Create(expand, TweenInfo.new(1.4, Enum.EasingStyle.Exponential), {Rotation = 0}):Play()
+		end
+	end)
+
+	expand.MouseEnter:Connect(function()
+		tweenservice:Create(expand, TweenInfo.new(1.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0}):Play()
+	end)
+
+	expand.MouseLeave:Connect(function()
+		tweenservice:Create(expand, TweenInfo.new(1.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0.8}):Play()
+	end)
 
 
 	WINDOW.Top.UHolder.Util.Mini.interact.MouseButton1Click:Connect(function()
