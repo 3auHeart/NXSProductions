@@ -1,6 +1,7 @@
 -- ============================================================================
--- PROMPT SYSTEM MODULE
--- Professional OOP Implementation with Versioning
+-- PROMPT INTERFACE MODULE
+-- Made by the Nexus Team
+-- Do NOT redistribute.
 -- ============================================================================
 
 local RunService = game:GetService("RunService")
@@ -8,58 +9,35 @@ local CoreGui = game:GetService("CoreGui")
 local TextService = game:GetService("TextService")
 local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
+local UserInputService = game:GetService("UserInputService")
 
 -- ============================================================================
 -- CONFIGURATION
 -- ============================================================================
 
 local PROMPT_CONFIG = {
-    Storage = {
-        FolderName = "Nexus",
-        FileName = "accepted_prompts.json",
-        SchemaVersion = 2,
-    },
-    Sizes = {
+    Sizing = {
         MaxWidth = 520,
         MinWidth = 450,
         BaseHeight = 150,
-        ClosedWidth = 430,
-        ClosedHeight = 110,
-        InitialWidth = 450,
-        InitialHeight = 120,
         Padding = 40,
-        ContentPadding = 80,
+        ButtonMinHeight = 44,
+        MobileButtonMinHeight = 52,
     },
-    Typography = {
-        TitleFont = Enum.Font.SourceSansBold,
-        TitleSize = 18,
-        DescriptionFont = Enum.Font.SourceSans,
-        DescriptionSize = 14,
+    Animation = {
+        OpenDuration = 0.4,
+        CloseDuration = 0.3,
+        EasingStyle = Enum.EasingStyle.Exponential,
+        EasingDirection = Enum.EasingDirection.Out,
     },
     Colors = {
         PrimaryButton = Color3.fromRGB(129, 31, 255),
         PrimaryButtonHover = Color3.fromRGB(145, 50, 255),
     },
-    Animation = {
-        OpenDuration = 0.4,
-        CloseDuration = 0.3,
-        FadeDuration = 0.25,
-        SizeEasing = Enum.EasingStyle.Quint,
-        FadeEasing = Enum.EasingStyle.Exponential,
-        EasingDirection = Enum.EasingDirection.Out,
+    Storage = {
+        FolderName = "Nexus",
+        FileName = "accepted_prompts.json",
     },
-    Transparency = {
-        ShadowVisible = 0.6,
-        ShadowHidden = 1,
-        DescriptionVisible = 0.5,
-        PrimaryButtonVisible = 0.3,
-        PrimaryTitleVisible = 0.2,
-        PrimaryShadowVisible = 0.7,
-        SecondaryTitleVisible = 0.6,
-    },
-    AssetId = "rbxassetid://97206084643256",
-    MarkerName = "NexusPromptMarker",
-    PromptName = "Prompt",
 }
 
 -- ============================================================================
@@ -71,116 +49,202 @@ StorageManager.__index = StorageManager
 
 function StorageManager.New()
     local self = setmetatable({}, StorageManager)
-    self.FolderPath = PROMPT_CONFIG.Storage.FolderName
-    self.FilePath = self.FolderPath .. "/" .. PROMPT_CONFIG.Storage.FileName
-    self.SchemaVersion = PROMPT_CONFIG.Storage.SchemaVersion
-    self.Cache = nil
+    self.FilePath = PROMPT_CONFIG.Storage.FolderName .. "/" .. PROMPT_CONFIG.Storage.FileName
+    self.Cache = {}
+    self:Load()
     return self
 end
 
 function StorageManager:EnsureFolderExists()
-    if not isfolder(self.FolderPath) then
-        makefolder(self.FolderPath)
+    if not isfolder(PROMPT_CONFIG.Storage.FolderName) then
+        makefolder(PROMPT_CONFIG.Storage.FolderName)
     end
 end
 
 function StorageManager:Load()
-    if self.Cache then
-        return self.Cache
-    end
-    
     self:EnsureFolderExists()
-    
-    if not isfile(self.FilePath) then
-        self.Cache = self:CreateDefaultData()
-        return self.Cache
-    end
-    
-    local Content = readfile(self.FilePath)
-    local Success, Data = pcall(HttpService.JSONDecode, HttpService, Content)
-    
-    if not Success or type(Data) ~= "table" then
-        self.Cache = self:CreateDefaultData()
-        return self.Cache
-    end
-    
-    self.Cache = self:MigrateData(Data)
-    return self.Cache
-end
-
-function StorageManager:CreateDefaultData()
-    return {
-        SchemaVersion = self.SchemaVersion,
-        Prompts = {},
-    }
-end
-
-function StorageManager:MigrateData(Data)
-    if not Data.SchemaVersion then
-        local MigratedData = self:CreateDefaultData()
-        for PromptId, Accepted in pairs(Data) do
-            if type(Accepted) == "boolean" and Accepted then
-                MigratedData.Prompts[PromptId] = {
-                    AcceptedAt = os.time(),
-                    Version = 1,
-                }
-            end
+    if isfile(self.FilePath) then
+        local Content = readfile(self.FilePath)
+        local Success, Data = pcall(HttpService.JSONDecode, HttpService, Content)
+        if Success and type(Data) == "table" then
+            self.Cache = Data
+            return
         end
-        self:Save(MigratedData)
-        return MigratedData
     end
-    
-    if Data.SchemaVersion < self.SchemaVersion then
-        Data.SchemaVersion = self.SchemaVersion
-        self:Save(Data)
-    end
-    
-    return Data
+    self.Cache = {}
 end
 
-function StorageManager:Save(Data)
+function StorageManager:Save()
     self:EnsureFolderExists()
-    self.Cache = Data
-    writefile(self.FilePath, HttpService:JSONEncode(Data))
+    local Success, Encoded = pcall(HttpService.JSONEncode, HttpService, self.Cache)
+    if Success then
+        writefile(self.FilePath, Encoded)
+    end
 end
 
-function StorageManager:GetPromptData(PromptId)
-    local Data = self:Load()
-    return Data.Prompts[PromptId]
+function StorageManager:GetAcceptedVersion(PromptId)
+    local Entry = self.Cache[PromptId]
+    if Entry and type(Entry) == "table" then
+        return Entry.Version, Entry.AcceptedAt
+    elseif Entry == true then
+        return "1.0.0", nil
+    end
+    return nil, nil
 end
 
-function StorageManager:SetPromptAccepted(PromptId, Version)
-    local Data = self:Load()
-    Data.Prompts[PromptId] = {
+function StorageManager:SetAccepted(PromptId, Version)
+    self.Cache[PromptId] = {
+        Version = Version,
         AcceptedAt = os.time(),
-        Version = Version or 1,
     }
-    self:Save(Data)
+    self:Save()
 end
 
-function StorageManager:ClearPromptAcceptance(PromptId)
-    local Data = self:Load()
-    Data.Prompts[PromptId] = nil
-    self:Save(Data)
-end
-
-function StorageManager:IsPromptAccepted(PromptId, RequiredVersion)
-    local PromptData = self:GetPromptData(PromptId)
-    
-    if not PromptData then
-        return false
+function StorageManager:ClearAcceptance(PromptId)
+    if self.Cache[PromptId] then
+        self.Cache[PromptId] = nil
+        self:Save()
     end
-    
-    if RequiredVersion and PromptData.Version < RequiredVersion then
-        return false
-    end
-    
-    return true
 end
 
 function StorageManager:ClearAll()
-    self.Cache = self:CreateDefaultData()
-    self:Save(self.Cache)
+    self.Cache = {}
+    self:Save()
+end
+
+function StorageManager:IsVersionAccepted(PromptId, RequiredVersion)
+    local AcceptedVersion = self:GetAcceptedVersion(PromptId)
+    if not AcceptedVersion then
+        return false
+    end
+    return self:CompareVersions(AcceptedVersion, RequiredVersion) >= 0
+end
+
+function StorageManager:CompareVersions(VersionA, VersionB)
+    local function ParseVersion(VersionString)
+        local Major, Minor, Patch = VersionString:match("^(%d+)%.?(%d*)%.?(%d*)$")
+        return {
+            Major = tonumber(Major) or 0,
+            Minor = tonumber(Minor) or 0,
+            Patch = tonumber(Patch) or 0,
+        }
+    end
+    
+    local A = ParseVersion(tostring(VersionA))
+    local B = ParseVersion(tostring(VersionB))
+    
+    if A.Major ~= B.Major then
+        return A.Major - B.Major
+    elseif A.Minor ~= B.Minor then
+        return A.Minor - B.Minor
+    else
+        return A.Patch - B.Patch
+    end
+end
+
+-- ============================================================================
+-- PROMPT BUILDER CLASS
+-- ============================================================================
+
+local PromptBuilder = {}
+PromptBuilder.__index = PromptBuilder
+
+function PromptBuilder.New()
+    local self = setmetatable({}, PromptBuilder)
+    self.UseStudio = RunService:IsStudio()
+    return self
+end
+
+function PromptBuilder:CalculateDynamicSize(TitleText, DescriptionText)
+    local Config = PROMPT_CONFIG.Sizing
+    
+    local TitleBounds = TextService:GetTextSize(
+        TitleText,
+        18,
+        Enum.Font.SourceSansBold,
+        Vector2.new(Config.MaxWidth - Config.Padding, math.huge)
+    )
+    
+    local DescBounds = TextService:GetTextSize(
+        DescriptionText,
+        14,
+        Enum.Font.SourceSans,
+        Vector2.new(Config.MaxWidth - Config.Padding, math.huge)
+    )
+    
+    local ContentHeight = TitleBounds.Y + DescBounds.Y + 80
+    local FinalHeight = math.max(Config.BaseHeight, ContentHeight)
+    local FinalWidth = math.max(
+        Config.MinWidth,
+        math.min(Config.MaxWidth, math.max(TitleBounds.X + Config.Padding, DescBounds.X + Config.Padding))
+    )
+    
+    return UDim2.new(0, FinalWidth, 0, FinalHeight)
+end
+
+function PromptBuilder:GetPromptTemplate()
+    if self.UseStudio then
+        local Template = script.Parent:FindFirstChild("Prompt")
+        if Template then
+            return Template:Clone()
+        end
+    end
+    
+    local Objects = game:GetObjects("rbxassetid://97206084643256")
+    if Objects and Objects[1] then
+        return Objects[1]
+    end
+    
+    return nil
+end
+
+function PromptBuilder:EnhanceButtonForMobile(Button)
+    if Button:FindFirstChild("Interact") then
+        local Interact = Button.Interact
+        Interact.Size = UDim2.new(1, 20, 1, 20)
+        Interact.Position = UDim2.new(0, -10, 0, -10)
+        Interact.ZIndex = Interact.ZIndex + 10
+        Interact.Active = true
+        Interact.Selectable = true
+        Interact.BackgroundTransparency = 1
+    end
+end
+
+function PromptBuilder:Build(Options)
+    local Template = self:GetPromptTemplate()
+    if not Template then
+        warn("[PromptInterface] Failed to load prompt template")
+        return nil
+    end
+    
+    Template.Enabled = false
+    Template.Name = "Prompt_" .. HttpService:GenerateGUID(false):sub(1, 8)
+    
+    local Policy = Template.Policy
+    Policy.Title.Text = Options.Title
+    Policy.Title.TextWrapped = true
+    Policy.Notice.Text = Options.Description
+    Policy.Notice.TextWrapped = true
+    
+    local PrimaryButton = Policy.Actions.Primary
+    PrimaryButton.Title.Text = Options.PrimaryText
+    self:EnhanceButtonForMobile(PrimaryButton)
+    
+    local SecondaryButton = Policy.Actions:FindFirstChild("Secondary")
+    if Options.SecondaryText and Options.SecondaryText ~= "" then
+        if SecondaryButton then
+            SecondaryButton.Title.Text = Options.SecondaryText
+            self:EnhanceButtonForMobile(SecondaryButton)
+        end
+    else
+        if SecondaryButton then
+            SecondaryButton:Destroy()
+        end
+    end
+    
+    local FinalSize = self:CalculateDynamicSize(Options.Title, Options.Description)
+    
+    return Template, FinalSize
 end
 
 -- ============================================================================
@@ -190,121 +254,157 @@ end
 local PromptAnimator = {}
 PromptAnimator.__index = PromptAnimator
 
-function PromptAnimator.New(PromptGui)
+function PromptAnimator.New(PromptInstance)
     local self = setmetatable({}, PromptAnimator)
-    self.PromptGui = PromptGui
-    self.Policy = PromptGui.Policy
+    self.Prompt = PromptInstance
+    self.Policy = PromptInstance.Policy
     self.IsAnimating = false
     return self
 end
 
-function PromptAnimator:CreateTween(Instance, Duration, Properties, EasingStyle, EasingDirection)
-    EasingStyle = EasingStyle or PROMPT_CONFIG.Animation.FadeEasing
-    EasingDirection = EasingDirection or PROMPT_CONFIG.Animation.EasingDirection
+function PromptAnimator:PlayOpen(FinalSize)
+    if self.IsAnimating then return end
+    self.IsAnimating = true
     
-    local TweenInformation = TweenInfo.new(Duration, EasingStyle, EasingDirection)
-    return TweenService:Create(Instance, TweenInformation, Properties)
-end
-
-function PromptAnimator:SetInitialState()
-    local Sizes = PROMPT_CONFIG.Sizes
+    local Policy = self.Policy
+    local Config = PROMPT_CONFIG.Animation
     
-    self.Policy.Size = UDim2.new(0, Sizes.InitialWidth, 0, Sizes.InitialHeight)
-    self.Policy.BackgroundTransparency = 1
-    self.Policy.Shadow.Image.ImageTransparency = 1
-    self.Policy.Title.TextTransparency = 1
-    self.Policy.Notice.TextTransparency = 1
-    self.Policy.Actions.Primary.BackgroundTransparency = 1
-    self.Policy.Actions.Primary.Shadow.ImageTransparency = 1
-    self.Policy.Actions.Primary.Title.TextTransparency = 1
+    Policy.Size = UDim2.new(0, 450, 0, 120)
+    Policy.BackgroundTransparency = 1
+    Policy.Shadow.Image.ImageTransparency = 1
+    Policy.Title.TextTransparency = 1
+    Policy.Notice.TextTransparency = 1
+    Policy.Actions.Primary.BackgroundTransparency = 1
+    Policy.Actions.Primary.Shadow.ImageTransparency = 1
+    Policy.Actions.Primary.Title.TextTransparency = 1
     
-    local SecondaryButton = self.Policy.Actions:FindFirstChild("Secondary")
+    local SecondaryButton = Policy.Actions:FindFirstChild("Secondary")
     if SecondaryButton then
         SecondaryButton.Title.TextTransparency = 1
     end
     
-    self.Policy.Actions.Primary.BackgroundColor3 = PROMPT_CONFIG.Colors.PrimaryButton
-end
-
-function PromptAnimator:AnimateOpen(FinalSize)
-    if self.IsAnimating then return end
-    self.IsAnimating = true
+    Policy.Actions.Primary.BackgroundColor3 = PROMPT_CONFIG.Colors.PrimaryButton
+    Policy.Visible = true
+    self.Prompt.Enabled = true
     
-    local AnimConfig = PROMPT_CONFIG.Animation
-    local TransConfig = PROMPT_CONFIG.Transparency
+    TweenService:Create(Policy, TweenInfo.new(Config.OpenDuration, Config.EasingStyle, Config.EasingDirection), {
+        BackgroundTransparency = 0
+    }):Play()
     
-    self:SetInitialState()
-    self.Policy.Visible = true
-    self.PromptGui.Enabled = true
+    TweenService:Create(Policy.Shadow.Image, TweenInfo.new(0.25, Config.EasingStyle, Config.EasingDirection), {
+        ImageTransparency = 0.6
+    }):Play()
     
-    self:CreateTween(self.Policy, AnimConfig.OpenDuration, {BackgroundTransparency = 0}):Play()
-    self:CreateTween(self.Policy.Shadow.Image, AnimConfig.FadeDuration, {ImageTransparency = TransConfig.ShadowVisible}):Play()
-    self:CreateTween(self.Policy, 0.6, {Size = FinalSize}, AnimConfig.SizeEasing):Play()
+    TweenService:Create(Policy, TweenInfo.new(0.6, Enum.EasingStyle.Quint, Config.EasingDirection), {
+        Size = FinalSize
+    }):Play()
     
     task.wait(0.15)
-    self:CreateTween(self.Policy.Title, 0.35, {TextTransparency = 0}):Play()
+    
+    TweenService:Create(Policy.Title, TweenInfo.new(0.35, Config.EasingStyle, Config.EasingDirection), {
+        TextTransparency = 0
+    }):Play()
     
     task.wait(0.03)
-    self:CreateTween(self.Policy.Notice, AnimConfig.FadeDuration, {TextTransparency = TransConfig.DescriptionVisible}):Play()
+    
+    TweenService:Create(Policy.Notice, TweenInfo.new(0.25, Config.EasingStyle, Config.EasingDirection), {
+        TextTransparency = 0.5
+    }):Play()
     
     task.wait(0.15)
-    self:CreateTween(self.Policy.Actions.Primary, 0.6, {BackgroundTransparency = TransConfig.PrimaryButtonVisible}):Play()
-    self:CreateTween(self.Policy.Actions.Primary.Title, AnimConfig.FadeDuration, {TextTransparency = TransConfig.PrimaryTitleVisible}):Play()
-    self:CreateTween(self.Policy.Actions.Primary.Shadow, AnimConfig.FadeDuration, {ImageTransparency = TransConfig.PrimaryShadowVisible}):Play()
     
-    local SecondaryButton = self.Policy.Actions:FindFirstChild("Secondary")
+    TweenService:Create(Policy.Actions.Primary, TweenInfo.new(0.6, Config.EasingStyle, Config.EasingDirection), {
+        BackgroundTransparency = 0.3
+    }):Play()
+    
+    TweenService:Create(Policy.Actions.Primary.Title, TweenInfo.new(0.25, Config.EasingStyle, Config.EasingDirection), {
+        TextTransparency = 0.2
+    }):Play()
+    
+    TweenService:Create(Policy.Actions.Primary.Shadow, TweenInfo.new(0.25, Config.EasingStyle, Config.EasingDirection), {
+        ImageTransparency = 0.7
+    }):Play()
+    
     if SecondaryButton then
-        self:CreateTween(SecondaryButton.Title, AnimConfig.FadeDuration, {TextTransparency = TransConfig.SecondaryTitleVisible}):Play()
+        TweenService:Create(SecondaryButton.Title, TweenInfo.new(0.25, Config.EasingStyle, Config.EasingDirection), {
+            TextTransparency = 0.6
+        }):Play()
     end
     
     self.IsAnimating = false
 end
 
-function PromptAnimator:AnimateClose()
+function PromptAnimator:PlayClose()
     if self.IsAnimating then return end
     self.IsAnimating = true
     
-    local AnimConfig = PROMPT_CONFIG.Animation
-    local Sizes = PROMPT_CONFIG.Sizes
+    local Policy = self.Policy
+    local Config = PROMPT_CONFIG.Animation
     
-    self:CreateTween(self.Policy, AnimConfig.CloseDuration, {Size = UDim2.new(0, Sizes.ClosedWidth, 0, Sizes.ClosedHeight)}):Play()
-    self:CreateTween(self.Policy.Title, 0.35, {TextTransparency = 1}):Play()
-    self:CreateTween(self.Policy.Notice, AnimConfig.FadeDuration, {TextTransparency = 1}):Play()
+    TweenService:Create(Policy, TweenInfo.new(Config.CloseDuration, Config.EasingStyle, Config.EasingDirection), {
+        Size = UDim2.new(0, 430, 0, 110)
+    }):Play()
     
-    local SecondaryButton = self.Policy.Actions:FindFirstChild("Secondary")
+    TweenService:Create(Policy.Title, TweenInfo.new(0.35, Config.EasingStyle, Config.EasingDirection), {
+        TextTransparency = 1
+    }):Play()
+    
+    TweenService:Create(Policy.Notice, TweenInfo.new(0.25, Config.EasingStyle, Config.EasingDirection), {
+        TextTransparency = 1
+    }):Play()
+    
+    local SecondaryButton = Policy.Actions:FindFirstChild("Secondary")
     if SecondaryButton then
-        self:CreateTween(SecondaryButton.Title, AnimConfig.FadeDuration, {TextTransparency = 1}):Play()
+        TweenService:Create(SecondaryButton.Title, TweenInfo.new(0.25, Config.EasingStyle, Config.EasingDirection), {
+            TextTransparency = 1
+        }):Play()
     end
     
-    self:CreateTween(self.Policy.Actions.Primary, AnimConfig.OpenDuration, {BackgroundTransparency = 1}):Play()
-    self:CreateTween(self.Policy.Actions.Primary.Title, AnimConfig.FadeDuration, {TextTransparency = 1}):Play()
-    self:CreateTween(self.Policy.Actions.Primary.Shadow, AnimConfig.FadeDuration, {ImageTransparency = 1}):Play()
-    self:CreateTween(self.Policy, 0.2, {BackgroundTransparency = 1}):Play()
-    self:CreateTween(self.Policy.Shadow.Image, AnimConfig.FadeDuration, {ImageTransparency = 1}):Play()
+    TweenService:Create(Policy.Actions.Primary, TweenInfo.new(0.4, Config.EasingStyle, Config.EasingDirection), {
+        BackgroundTransparency = 1
+    }):Play()
+    
+    TweenService:Create(Policy.Actions.Primary.Title, TweenInfo.new(0.25, Config.EasingStyle, Config.EasingDirection), {
+        TextTransparency = 1
+    }):Play()
+    
+    TweenService:Create(Policy.Actions.Primary.Shadow, TweenInfo.new(0.25, Config.EasingStyle, Config.EasingDirection), {
+        ImageTransparency = 1
+    }):Play()
+    
+    TweenService:Create(Policy, TweenInfo.new(0.2, Config.EasingStyle, Config.EasingDirection), {
+        BackgroundTransparency = 1
+    }):Play()
+    
+    TweenService:Create(Policy.Shadow.Image, TweenInfo.new(0.25, Config.EasingStyle, Config.EasingDirection), {
+        ImageTransparency = 1
+    }):Play()
     
     task.wait(0.5)
     self.IsAnimating = false
 end
 
 -- ============================================================================
--- PROMPT CLASS
+-- PROMPT INSTANCE CLASS
 -- ============================================================================
 
 local Prompt = {}
 Prompt.__index = Prompt
 
-function Prompt.New(Options)
+function Prompt.New(Options, Storage)
     local self = setmetatable({}, Prompt)
     
-    self.Title = Options.Title or "Prompt"
-    self.Description = Options.Description or ""
+    self.Id = Options.Id or Options.Title
+    self.Version = Options.Version or "1.0.0"
+    self.Title = Options.Title
+    self.Description = Options.Description
     self.PrimaryText = Options.PrimaryText or "Accept"
     self.SecondaryText = Options.SecondaryText
     self.Callback = Options.Callback
-    self.PromptId = Options.PromptId or self.Title
-    self.Version = Options.Version or 1
+    self.ForceShow = Options.ForceShow or false
     
-    self.PromptGui = nil
+    self.Storage = Storage
+    self.GuiInstance = nil
     self.Animator = nil
     self.Connections = {}
     self.IsDestroyed = false
@@ -312,136 +412,104 @@ function Prompt.New(Options)
     return self
 end
 
-function Prompt:CalculateDynamicSize()
-    local Sizes = PROMPT_CONFIG.Sizes
-    local Typography = PROMPT_CONFIG.Typography
-    
-    local TitleBounds = TextService:GetTextSize(
-        self.Title,
-        Typography.TitleSize,
-        Typography.TitleFont,
-        Vector2.new(Sizes.MaxWidth - Sizes.Padding, math.huge)
-    )
-    
-    local DescriptionBounds = TextService:GetTextSize(
-        self.Description,
-        Typography.DescriptionSize,
-        Typography.DescriptionFont,
-        Vector2.new(Sizes.MaxWidth - Sizes.Padding, math.huge)
-    )
-    
-    local ContentHeight = TitleBounds.Y + DescriptionBounds.Y + Sizes.ContentPadding
-    local FinalHeight = math.max(Sizes.BaseHeight, ContentHeight)
-    local FinalWidth = math.max(Sizes.MinWidth, math.min(Sizes.MaxWidth, math.max(TitleBounds.X + Sizes.Padding, DescriptionBounds.X + Sizes.Padding)))
-    
-    return UDim2.new(0, FinalWidth, 0, FinalHeight)
+function Prompt:ShouldShow()
+    if self.ForceShow then
+        return true
+    end
+    return not self.Storage:IsVersionAccepted(self.Id, self.Version)
 end
 
-function Prompt:CreateGui()
-    local UseStudio = RunService:IsStudio()
-    
-    if UseStudio then
-        local StudioPrompt = script.Parent:FindFirstChild("Prompt")
-        if StudioPrompt then
-            self.PromptGui = StudioPrompt:Clone()
-        end
-    end
-    
-    if not self.PromptGui then
-        local Objects = game:GetObjects(PROMPT_CONFIG.AssetId)
-        if Objects and Objects[1] then
-            self.PromptGui = Objects[1]
-        end
-    end
-    
-    if not self.PromptGui then
-        warn("[PromptSystem] Failed to load prompt asset")
-        return false
-    end
-    
-    self.PromptGui.Enabled = false
-    self.PromptGui.Name = PROMPT_CONFIG.PromptName
-    self.PromptGui.Parent = CoreGui
-    
-    self:ConfigureGui()
-    self.Animator = PromptAnimator.New(self.PromptGui)
-    
-    return true
-end
-
-function Prompt:ConfigureGui()
-    local Policy = self.PromptGui.Policy
-    
-    Policy.Title.Text = self.Title
-    Policy.Notice.Text = self.Description
-    Policy.Actions.Primary.Title.Text = self.PrimaryText
-    Policy.Title.TextWrapped = true
-    Policy.Notice.TextWrapped = true
-    
+function Prompt:SetupButtonConnections()
+    local Policy = self.GuiInstance.Policy
+    local PrimaryButton = Policy.Actions.Primary
     local SecondaryButton = Policy.Actions:FindFirstChild("Secondary")
     
-    if not self.SecondaryText or self.SecondaryText == "" then
-        if SecondaryButton then
-            SecondaryButton:Destroy()
-        end
-    else
-        if SecondaryButton then
-            SecondaryButton.Title.Text = self.SecondaryText
-        end
-    end
-end
-
-function Prompt:ConnectEvents()
-    local Policy = self.PromptGui.Policy
-    
-    local PrimaryConnection = Policy.Actions.Primary.Interact.MouseButton1Click:Connect(function()
-        if self.Animator.IsAnimating then return end
-        self:Close(true)
-    end)
-    table.insert(self.Connections, PrimaryConnection)
-    
-    local SecondaryButton = Policy.Actions:FindFirstChild("Secondary")
-    if SecondaryButton then
-        local SecondaryConnection = SecondaryButton.Interact.MouseButton1Click:Connect(function()
-            if self.Animator.IsAnimating then return end
-            self:Close(false)
+    local PrimaryInteract = PrimaryButton:FindFirstChild("Interact")
+    if PrimaryInteract then
+        local Connection = PrimaryInteract.MouseButton1Click:Connect(function()
+            if self.Animator and self.Animator.IsAnimating then return end
+            self:Close(true)
         end)
-        table.insert(self.Connections, SecondaryConnection)
+        table.insert(self.Connections, Connection)
+        
+        if PrimaryInteract:IsA("TextButton") or PrimaryInteract:IsA("ImageButton") then
+            local TouchConnection = PrimaryInteract.TouchTap:Connect(function()
+                if self.Animator and self.Animator.IsAnimating then return end
+                self:Close(true)
+            end)
+            table.insert(self.Connections, TouchConnection)
+        end
+    end
+    
+    if SecondaryButton then
+        local SecondaryInteract = SecondaryButton:FindFirstChild("Interact")
+        if SecondaryInteract then
+            local Connection = SecondaryInteract.MouseButton1Click:Connect(function()
+                if self.Animator and self.Animator.IsAnimating then return end
+                self:Close(false)
+            end)
+            table.insert(self.Connections, Connection)
+            
+            if SecondaryInteract:IsA("TextButton") or SecondaryInteract:IsA("ImageButton") then
+                local TouchConnection = SecondaryInteract.TouchTap:Connect(function()
+                    if self.Animator and self.Animator.IsAnimating then return end
+                    self:Close(false)
+                end)
+                table.insert(self.Connections, TouchConnection)
+            end
+        end
     end
 end
 
 function Prompt:Show()
-    if self.IsDestroyed then return end
+    if self.IsDestroyed then return false end
     
-    if not self:CreateGui() then
-        return
+    local Builder = PromptBuilder.New()
+    local GuiInstance, FinalSize = Builder:Build({
+        Title = self.Title,
+        Description = self.Description,
+        PrimaryText = self.PrimaryText,
+        SecondaryText = self.SecondaryText,
+    })
+    
+    if not GuiInstance then
+        return false
     end
     
-    self:ConnectEvents()
+    self.GuiInstance = GuiInstance
+    self.GuiInstance.Parent = CoreGui
     
-    local FinalSize = self:CalculateDynamicSize()
+    self.Animator = PromptAnimator.New(self.GuiInstance)
+    self:SetupButtonConnections()
     
-    task.wait(0.5)
     task.spawn(function()
-        self.Animator:AnimateOpen(FinalSize)
+        self.Animator:PlayOpen(FinalSize)
     end)
+    
+    return true
 end
 
 function Prompt:Close(Accepted)
     if self.IsDestroyed then return end
     
-    self.Animator:AnimateClose()
+    if Accepted then
+        self.Storage:SetAccepted(self.Id, self.Version)
+    end
     
-    local Marker = CoreGui:FindFirstChild(PROMPT_CONFIG.MarkerName)
+    if self.Animator then
+        self.Animator:PlayClose()
+    end
+    
+    local Marker = CoreGui:FindFirstChild("NexusPromptMarker")
     if Marker then
         Marker:Destroy()
     end
     
-    self:Destroy()
-    
     if self.Callback then
-        task.spawn(self.Callback, Accepted, self.PromptId, self.Version)
+        task.spawn(self.Callback, Accepted)
     end
+    
+    self:Destroy()
 end
 
 function Prompt:Destroy()
@@ -455,210 +523,122 @@ function Prompt:Destroy()
     end
     self.Connections = {}
     
-    if self.PromptGui then
-        self.PromptGui:Destroy()
-        self.PromptGui = nil
+    if self.GuiInstance and self.GuiInstance.Parent then
+        self.GuiInstance:Destroy()
     end
     
+    self.GuiInstance = nil
     self.Animator = nil
 end
 
 -- ============================================================================
--- PROMPT MANAGER CLASS
+-- PROMPT INTERFACE (MAIN API)
 -- ============================================================================
 
-local PromptManager = {}
-PromptManager.__index = PromptManager
+local PromptInterface = {}
+PromptInterface.__index = PromptInterface
 
-function PromptManager.New()
-    local self = setmetatable({}, PromptManager)
-    self.Storage = StorageManager.New()
-    self.ActivePrompt = nil
-    self.Queue = {}
-    self.IsProcessingQueue = false
-    return self
-end
+local SharedStorage = nil
+local ActivePrompt = nil
 
-function PromptManager:CreateMarker()
-    if CoreGui:FindFirstChild(PROMPT_CONFIG.MarkerName) then
-        return false
-    end
-    
-    local Marker = Instance.new("Folder")
-    Marker.Name = PROMPT_CONFIG.MarkerName
-    Marker.Parent = CoreGui
-    
-    return true
-end
-
-function PromptManager:RemoveMarker()
-    local Marker = CoreGui:FindFirstChild(PROMPT_CONFIG.MarkerName)
-    if Marker then
-        Marker:Destroy()
+function PromptInterface.Initialize()
+    if not SharedStorage then
+        SharedStorage = StorageManager.New()
     end
 end
 
-function PromptManager:Create(Options)
-    local PromptId = Options.PromptId or Options.Title
-    local Version = Options.Version or 1
-    local ForceShow = Options.ForceShow or false
+function PromptInterface.Create(Options)
+    PromptInterface.Initialize()
     
-    if not ForceShow and self.Storage:IsPromptAccepted(PromptId, Version) then
-        if Options.Callback then
-            task.spawn(Options.Callback, true, PromptId, Version)
+    if type(Options) ~= "table" then
+        warn("[PromptInterface] Options must be a table")
+        return nil
+    end
+    
+    if not Options.Title then
+        warn("[PromptInterface] Title is required")
+        return nil
+    end
+    
+    local PromptInstance = Prompt.New(Options, SharedStorage)
+    
+    if not PromptInstance:ShouldShow() then
+        if PromptInstance.Callback then
+            task.spawn(PromptInstance.Callback, true)
         end
         return nil
     end
     
-    local OriginalCallback = Options.Callback
-    Options.Callback = function(Accepted, Id, Ver)
-        if Accepted then
-            self.Storage:SetPromptAccepted(Id, Ver)
-        end
-        self.ActivePrompt = nil
-        self:ProcessQueue()
-        if OriginalCallback then
-            OriginalCallback(Accepted, Id, Ver)
-        end
+    if CoreGui:FindFirstChild("NexusPromptMarker") then
+        return nil
     end
     
-    local NewPrompt = Prompt.New(Options)
+    local Marker = Instance.new("Folder")
+    Marker.Name = "NexusPromptMarker"
+    Marker.Parent = CoreGui
     
-    if not self:CreateMarker() then
-        table.insert(self.Queue, NewPrompt)
-        return NewPrompt
-    end
+    ActivePrompt = PromptInstance
     
-    self.ActivePrompt = NewPrompt
-    NewPrompt:Show()
+    task.wait(0.5)
+    PromptInstance:Show()
     
-    return NewPrompt
+    return PromptInstance
 end
 
-function PromptManager:ProcessQueue()
-    if self.IsProcessingQueue or #self.Queue == 0 then
-        return
-    end
-    
-    self.IsProcessingQueue = true
-    
-    task.wait(0.3)
-    
-    if self:CreateMarker() then
-        local NextPrompt = table.remove(self.Queue, 1)
-        if NextPrompt and not NextPrompt.IsDestroyed then
-            self.ActivePrompt = NextPrompt
-            NextPrompt:Show()
-        end
-    end
-    
-    self.IsProcessingQueue = false
-end
-
-function PromptManager:IsAccepted(PromptId, RequiredVersion)
-    return self.Storage:IsPromptAccepted(PromptId, RequiredVersion)
-end
-
-function PromptManager:ClearAcceptance(PromptId)
-    self.Storage:ClearPromptAcceptance(PromptId)
-end
-
-function PromptManager:ClearAllAcceptance()
-    self.Storage:ClearAll()
-end
-
-function PromptManager:GetPromptInfo(PromptId)
-    return self.Storage:GetPromptData(PromptId)
-end
-
-function PromptManager:CloseActive()
-    if self.ActivePrompt then
-        self.ActivePrompt:Close(false)
-    end
-end
-
-function PromptManager:ClearQueue()
-    for _, QueuedPrompt in ipairs(self.Queue) do
-        QueuedPrompt:Destroy()
-    end
-    self.Queue = {}
-end
-
-function PromptManager:Cleanup()
-    self:CloseActive()
-    self:ClearQueue()
-    self:RemoveMarker()
-end
-
--- ============================================================================
--- MODULE INTERFACE
--- ============================================================================
-
-local PromptSystem = {}
-
-local DefaultManager = nil
-
-function PromptSystem.GetManager()
-    if not DefaultManager then
-        DefaultManager = PromptManager.New()
-    end
-    return DefaultManager
-end
-
-function PromptSystem.Create(Title, Description, Primary, Secondary, Callback, PromptId, Version)
-    local Manager = PromptSystem.GetManager()
-    
-    return Manager:Create({
+function PromptInterface.create(Title, Description, Primary, Secondary, Callback, PromptId)
+    return PromptInterface.Create({
+        Id = PromptId or Title,
+        Version = "1.0.0",
         Title = Title,
         Description = Description,
         PrimaryText = Primary,
         SecondaryText = Secondary,
         Callback = Callback,
-        PromptId = PromptId,
-        Version = Version,
     })
 end
 
-function PromptSystem.CreateAdvanced(Options)
-    local Manager = PromptSystem.GetManager()
-    return Manager:Create(Options)
+function PromptInterface.IsAccepted(PromptId, Version)
+    PromptInterface.Initialize()
+    Version = Version or "1.0.0"
+    return SharedStorage:IsVersionAccepted(PromptId, Version)
 end
 
-function PromptSystem.IsAccepted(PromptId, RequiredVersion)
-    local Manager = PromptSystem.GetManager()
-    return Manager:IsAccepted(PromptId, RequiredVersion)
+function PromptInterface.GetAcceptedVersion(PromptId)
+    PromptInterface.Initialize()
+    return SharedStorage:GetAcceptedVersion(PromptId)
 end
 
-function PromptSystem.ClearAcceptance(PromptId)
-    local Manager = PromptSystem.GetManager()
-    Manager:ClearAcceptance(PromptId)
+function PromptInterface.ClearAcceptance(PromptId)
+    PromptInterface.Initialize()
+    SharedStorage:ClearAcceptance(PromptId)
 end
 
-function PromptSystem.ClearAllAcceptance()
-    local Manager = PromptSystem.GetManager()
-    Manager:ClearAllAcceptance()
+function PromptInterface.ClearAllAcceptances()
+    PromptInterface.Initialize()
+    SharedStorage:ClearAll()
 end
 
-function PromptSystem.GetPromptInfo(PromptId)
-    local Manager = PromptSystem.GetManager()
-    return Manager:GetPromptInfo(PromptId)
+function PromptInterface.CloseActive()
+    if ActivePrompt and not ActivePrompt.IsDestroyed then
+        ActivePrompt:Close(false)
+        ActivePrompt = nil
+    end
 end
 
-function PromptSystem.CloseActive()
-    local Manager = PromptSystem.GetManager()
-    Manager:CloseActive()
+function PromptInterface.GetConfig()
+    return PROMPT_CONFIG
 end
 
-function PromptSystem.Cleanup()
-    local Manager = PromptSystem.GetManager()
-    Manager:Cleanup()
+function PromptInterface.SetConfig(NewConfig)
+    for Category, Settings in pairs(NewConfig) do
+        if PROMPT_CONFIG[Category] then
+            for Key, Value in pairs(Settings) do
+                if PROMPT_CONFIG[Category][Key] ~= nil then
+                    PROMPT_CONFIG[Category][Key] = Value
+                end
+            end
+        end
+    end
 end
 
-PromptSystem.Config = PROMPT_CONFIG
-
-PromptSystem.StorageManager = StorageManager
-PromptSystem.PromptAnimator = PromptAnimator
-PromptSystem.Prompt = Prompt
-PromptSystem.PromptManager = PromptManager
-
-return PromptSystem
+return PromptInterface
